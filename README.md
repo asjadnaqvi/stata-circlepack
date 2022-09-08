@@ -57,7 +57,7 @@ The syntax for v1.0 is as follows:
 ```
 
 circlepack values [if] [in], by(variables (min=1, max=3)) 
-                [ pad(num) points(num) angle(num) circle0 format(str) palette(string) addtitles novalues nolabels labsize(num) 
+                [ pad(num) points(num) angle(num) circle0 circle0c(str) format(str) palette(string) addtitles novalues nolabels labsize(num) 
                   title(str) subtitle(str) note(str) scheme(str) name(str) ]
 ```
 

@@ -6,16 +6,16 @@
 {hline}
 
 
-{title:circlepack}: A Stata package for hierarchical {browse "https://en.wikipedia.org/wiki/Circle_packing":circle packing}.
-This program implements the {it:A1.0} algorithm by Huang et. al. 2006. 
-The implementation is based on D3's {browse "https://observablehq.com/@d3/d3-packenclose":packEnclose} and Python's {browse "https://github.com/elmotec/circlify":circlify} routines.
+{title:circlepack}: A Stata package for hierarchical {browse "https://en.wikipedia.org/wiki/Circle_packing":circle packing}. 
+
+This program implements the {it:A1.0} algorithm (Huang et. al. 2006) based on D3's {browse "https://observablehq.com/@d3/d3-packenclose":packEnclose} and Python's {browse "https://github.com/elmotec/circlify":circlify} routines.
 
 
 {marker syntax}{title:Syntax}
 {p 8 15 2}
 
 {cmd:circlepack} {it:numvar} {ifin}, {cmd:by}({it:variables (min=1, max=3})) 
-		{cmd:[} {cmd:pad}({it:num}) {cmd:points}({it:num}) {cmd:angle}({it:num}) {cmd:circle0} {cmd:format}(str) {cmd:palette}(string) {cmdab:addt:itles} {cmdab:noval:ues} {cmdab:nolab:els} {cmdab:labs:ize}({it:num}) 
+		{cmd:[} {cmd:pad}({it:num}) {cmd:points}({it:num}) {cmd:angle}({it:num}) {cmd:circle0} {cmd:circle0c}(str) {cmd:format}(str) {cmd:palette}(string) {cmdab:addt:itles} {cmdab:noval:ues} {cmdab:nolab:els} {cmdab:labs:ize}({it:num}) 
 		  {cmd:title}({it:str}) {cmd:subtitle}({it:str}) {cmd:note}({it:str}) {cmd:scheme}({it:str}) {cmd:name}({it:str}) {cmd:]}
 
 
@@ -26,7 +26,7 @@ The options are described as follows:
 {synopthdr}
 {synoptline}
 
-{p2coldent : {opt circlepack numvar}}The command requires a {it:numeric variable} that contains the values.{p_end}
+{p2coldent : {opt circlepack} {it:numvar}}The command requires a {it:numeric variable} that contains the values.{p_end}
 
 {p2coldent : {opt by(group vars)}}At least one {it:by()} string variable needs to be specified, and a maximum of three string variables are allowed. These also are used as labels.
 The order is inner-most layer first and top-most layer last.{p_end}
@@ -41,7 +41,9 @@ For example, if you draw hexagons, you can rotate the shapes using this option.{
 
 {p2coldent : {opt circle0}}Drawing the bounding circle.{p_end}
 
-{p2coldent : {opt palette(string)}}Color name is any named scheme defined in the {stata help colorpalette:colorpalette} package. Default is {stata colorpalette tableau:{it:tableau}}.{p_end}
+{p2coldent : {opt circle0c(str)}}Define the bounding circle color.{p_end}
+
+{p2coldent : {opt palette(str)}}Color name is any named scheme defined in the {stata help colorpalette:colorpalette} package. Default is {stata colorpalette tableau:{it:tableau}}.{p_end}
 
 {p2coldent : {opt addt:itles}}Add titles to upper layers. This adds the name and value in the top left corner of the boxes.{p_end}
 
@@ -49,13 +51,13 @@ For example, if you draw hexagons, you can rotate the shapes using this option.{
 
 {p2coldent : {opt nolab:els}}Do not add anylabels. This gives just boxes without any numbers.{p_end}
 
-{p2coldent : {opt labs:ize(string)}}The size of the labels. The default value is {it:1.2}.{p_end}
+{p2coldent : {opt labs:ize(str)}}The size of the labels. The default value is {it:1.2}.{p_end}
 
 {p2coldent : {opt format()}}Format the values of the y-axis category. The default is {it:%9.0fc}.{p_end}
 
 {p2coldent : {opt title, subtitle, note}}These are standard twoway graph options.{p_end}
 
-{p2coldent : {opt scheme(string)}}Load the custom scheme. Above options can be used to fine tune individual elements.{p_end}
+{p2coldent : {opt scheme(str)}}Load the custom scheme. Above options can be used to fine tune individual elements.{p_end}
 
 {synoptline}
 {p2colreset}{...}
@@ -74,7 +76,7 @@ Even if you have these installed, it is highly recommended to check for updates:
 
 {ul:{it:Set up the data}}
 
-use "D:\Programs\Dropbox\Dropbox\STATA - MEDIUM\Webinar - Stata UK Maps 2\GIS\demo_r_pjangrp3_clean.dta", clear
+use "https://github.com/asjadnaqvi/stata-circlepack/blob/main/data/demo_r_pjangrp3_clean.dta?raw=true", clear
 
 drop year
 keep NUTS_ID y_TOT
