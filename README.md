@@ -127,14 +127,14 @@ circlepack    y_TOT, by(NUTS0) title("Population of EU 27 countries") circle0 no
 circlepack    y_TOT, by(NUTS1 NUTS0) format(%15.0fc) noval circle0 
 ```
 
-<img src="/figures/circlepack4.png" height="400">
+<img src="/figures/circlepack4.png" height="600">
 
 
 ```
 circlepack    y_TOT, by(NUTS1 NUTS0) format(%15.0fc) noval addtitles 
 ```
 
-<img src="/figures/circlepack5.png" height="100">
+<img src="/figures/circlepack5.png" height="600">
 
 ```
 circlepack    y_TOT, by(NUTS2 NUTS1 NUTS0) format(%15.0fc) nolab pad(0.06)
