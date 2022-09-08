@@ -15,11 +15,6 @@ prog def circlepack, sortpreserve
 	
 	marksample touse, strok
 	
-	// preserve here
-	
-	// ADD CHECKS TO SEE IF by ARE IN THE CORRECT ORDER
-	
-	// ADD CHECKS IF THEY ARE NUMERIC OR STRINGS OR HAVE VALUE LABELS
 
 qui {	
   preserve	
@@ -113,11 +108,6 @@ qui {
 	levelsof var0_o
 	replace var0_o = r(r) - var0_o + 1
 	
-
-	** the next level is sorted highest to lowest
-
-	
-	
 	if `length' > 1 {
 			
 		egen var1_t = tag(`var0' `var1')
@@ -131,10 +121,6 @@ qui {
 		carryforward var1_o, replace
 	}
 
-	
-	
-	*** the next level is sorted highest to lowest
-
 	if `length' > 2 {	
 		sort `var1' id 
 		by `var1': gen var2_o = _n
@@ -145,7 +131,7 @@ qui {
 	
 	// set up the base values
 	
-	local radius = 10 // radius is hardcoded
+	local radius = 10 // this radius is hardcoded
 	mata: eps = 1e-9; enclosure0 = (0, 0, `radius'); angle = `angle'; pad = `pad'; obs = `points'
 	
 	if "`format'" == "" local format %9.0fc
@@ -225,7 +211,6 @@ qui {
 	mat li p0_lab
 	svmat p0_lab, n(col)
 	
-	// gen _l0_ymax = .
 	gen _l0_lab1 = ""
 	
 	levelsof var0_o, local(l0)
@@ -365,8 +350,6 @@ qui {
 	***************
 	*** level 1 ***
 	***************
-	
-	// noi di "Level 1"
 	
 	if `length' > 1 {	
 	
@@ -576,8 +559,6 @@ mata // place_new_A1_0
 		mhd = .
 		lead_candidate = .
 		
-		
-		// combolist
 		
 		for (i=1; i <= rows(combolist); i++) {	
 			
