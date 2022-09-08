@@ -425,7 +425,7 @@ qui {
 	}
 	
 	
-	if "`circle0c'" == "" local circle0c gs12
+	if "`circle0c'" == "" local circle0c gs15
 	
 	if "`circle0'" != "" {
 		
