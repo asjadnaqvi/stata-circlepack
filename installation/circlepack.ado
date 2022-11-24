@@ -30,7 +30,7 @@ qui {
 	keep if `touse'
 	
 	qui summ `varlist', meanonly
-	if r(min) <= 0 di in yellow "`varlist' contains zeros or negative values. These values have been dropped."
+	if r(min) <= 0 noi di in yellow "`varlist' contains zeros or negative values. These have been dropped."
 	
 	
 	drop if `varlist' <= 0	
