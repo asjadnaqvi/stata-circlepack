@@ -121,8 +121,8 @@ qui {
 	egen var0_t = tag(`var0')
 	gen  double var0_o = sum(`var0' != `var0'[_n-1]) 
 	
-	levelsof var0_o
-	replace var0_o = r(r) - var0_o + 1
+	*levelsof var0_o
+	*replace var0_o = r(r) - var0_o + 1
 	
 	if `length' > 1 {
 			
@@ -469,7 +469,7 @@ qui {
 			xscale(off) yscale(off) ///
 			aspect(1) xsize(1) ysize(1) ///
 			xlabel(-`radius' `radius', nogrid) ylabel(-`radius' `radius', nogrid) ///
-				`title' `subtitle' `note' `scheme'
+				`title' `subtitle' `note' `scheme' `name'
 			
 	
 	
