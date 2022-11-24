@@ -1,6 +1,8 @@
-*! circlepack v1.0 
+*! circlepack v1.01 (24 Nov 2022) 
 *! Asjad Naqvi (asjadnaqvi@gmail.com)
 
+*v1.01 (24 Nov 2022). Minor fixes to prevent duplicate value errors. Checks for 0s and negatives. Improved precision.
+*v1.0  (08 Sep 2022). First release.
 
 
 cap prog drop circlepack
@@ -15,10 +17,23 @@ prog def circlepack, sortpreserve
 	
 	marksample touse, strok
 	
+	
+	// check for dependencies
+	cap findfile carryforward.ado
+	if _rc != 0 {
+		qui ssc install carryforward, replace
+	}		
+	
 
 qui {	
   preserve	
 	keep if `touse'
+	
+	qui summ `varlist', meanonly
+	if r(min) <= 0 di in yellow "`varlist' contains zeros or negative values. These values have been dropped."
+	
+	
+	drop if `varlist' <= 0	
 	
 	local length : word count `by'
 	
@@ -33,8 +48,8 @@ qui {
 		
 		collapse (sum) `varlist', by(`var0') 
 		
-		gen var0_v = `varlist'
-		gsort -var0_v
+		gen double var0_v = `varlist'
+		gsort -var0_v `var0'  // stabilize the sort
 	}
 
 	if `length' == 2 {
@@ -57,7 +72,7 @@ qui {
 		collapse (sum) `varlist', by(`var0' `var1') 
 
 		bysort `var0': egen var0_v = sum(`varlist')
-		gen var1_v = `varlist'
+		gen double var1_v = `varlist'
 
 		gsort -var0_v -var1_v
 		
@@ -93,7 +108,7 @@ qui {
 		
 		bysort `var0': egen var0_v = sum(`varlist')
 		bysort `var1': egen var1_v = sum(`varlist')
-		gen var2_v = `varlist'
+		gen double var2_v = `varlist'
 		
 		gsort -var0_v -var1_v -var2_v
 	}
@@ -104,16 +119,15 @@ qui {
 	** the highest level is sorted highest to lowest
 
 	egen var0_t = tag(`var0')
-	egen var0_o = group(var0_v) 
+	gen  double var0_o = sum(`var0' != `var0'[_n-1]) 
+	
 	levelsof var0_o
 	replace var0_o = r(r) - var0_o + 1
 	
 	if `length' > 1 {
 			
 		egen var1_t = tag(`var0' `var1')
-		
 
-		
 		gsort `var0' -var1_t -var1_v 
 		cap drop var1_o
 		bysort `var0': gen var1_o = _n if var1_t==1

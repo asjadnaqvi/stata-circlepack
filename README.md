@@ -1,7 +1,7 @@
 ![StataMin](https://img.shields.io/badge/stata-2015-blue) ![issues](https://img.shields.io/github/issues/asjadnaqvi/stata-circlepack) ![license](https://img.shields.io/github/license/asjadnaqvi/stata-circlepack) ![Stars](https://img.shields.io/github/stars/asjadnaqvi/stata-circlepack) ![version](https://img.shields.io/github/v/release/asjadnaqvi/stata-circlepack) ![release](https://img.shields.io/github/release-date/asjadnaqvi/stata-circlepack)
 
 
-# circlepack v1.0
+# circlepack v1.01
 
 
 This package provides the ability to draw circlepacks Stata.
@@ -18,7 +18,7 @@ The SSC version (**v1.0**):
 ssc install circlepack, replace
 ```
 
-Or it can be installed from GitHub (**v1.0**):
+Or it can be installed from GitHub (**v1.01**):
 
 ```
 net install circlepack, from("https://raw.githubusercontent.com/asjadnaqvi/stata-circlepack/main/installation/") replace
@@ -52,7 +52,7 @@ graph set window fontface "Arial Narrow"
 
 ## Syntax
 
-The syntax for v1.0 is as follows:
+The syntax for v1.01 is as follows:
 
 ```
 
@@ -190,7 +190,13 @@ Please open an [issue](https://github.com/asjadnaqvi/stata-circlepack/issues) to
 
 ## Versions
 
-**v1.0 (08 September 2022)**
+**v1.01 (24 Nov 2022)**
+- Sorting stabilized to prevent random circlemap layouts.
+- Negative and zero values are automatically dropped.
+- Improved precision of variables.
+- Minor fixes in the code.
+
+**v1.0 (08 Sep 2022)**
 - First release
 
 

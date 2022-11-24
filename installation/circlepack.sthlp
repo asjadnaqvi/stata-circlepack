@@ -1,7 +1,7 @@
 {smcl}
-{* 08Sep2022}{...}
+{* 24Nov2022}{...}
 {hi:help circlepack}{...}
-{right:{browse "https://github.com/asjadnaqvi/stata-circlepack":circlepack v1.0 (GitHub)}}
+{right:{browse "https://github.com/asjadnaqvi/stata-circlepack":circlepack v1.01 (GitHub)}}
 
 {hline}
 
@@ -102,12 +102,12 @@ ren NUTS_ID NUTS3
 
 {title:Acknowledgements}
 
-
+Fayssal Ayad found errors with duplicate and zero values that was causing the layers to be drawn improperly (v1.01).
 
 {title:Package details}
 
-Version      : {bf:circlepack} v1.0
-This release : 08 Sep 2022
+Version      : {bf:circlepack} v1.01
+This release : 24 Nov 2022
 First release: 08 Sep 2022
 Repository   : {browse "https://github.com/asjadnaqvi/circlepack":GitHub}
 Keywords     : Stata, graph, circle packing, circlepack, A1.0
