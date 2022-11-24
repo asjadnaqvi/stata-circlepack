@@ -103,47 +103,47 @@ ren NUTS_ID NUTS3
 
 
 ```
-circlepack    y_TOT, by(NUTS0) format(%15.0fc) title("Population of EU 27 countries")
+circlepack y_TOT, by(NUTS0) format(%15.0fc) title("Population of EU 27 countries")
 ```
 
 <img src="/figures/circlepack1.png" height="600">
 
 
 ```
-circlepack    y_TOT, by(NUTS0) title("Population of EU 27 countries") noval
+circlepack y_TOT, by(NUTS0) title("Population of EU 27 countries") noval
 ```
 
 <img src="/figures/circlepack2.png" height="600">
 
 
 ```
-circlepack    y_TOT, by(NUTS0) title("Population of EU 27 countries") circle0 noval
+circlepack y_TOT, by(NUTS0) title("Population of EU 27 countries") circle0 noval
 ```
 
 <img src="/figures/circlepack3.png" height="600">
 
 
 ```
-circlepack    y_TOT, by(NUTS1 NUTS0) format(%15.0fc) noval circle0 
+circlepack y_TOT, by(NUTS1 NUTS0) format(%15.0fc) noval circle0 
 ```
 
 <img src="/figures/circlepack4.png" height="600">
 
 
 ```
-circlepack    y_TOT, by(NUTS1 NUTS0) format(%15.0fc) noval addtitles 
+circlepack y_TOT, by(NUTS1 NUTS0) format(%15.0fc) noval addtitles 
 ```
 
 <img src="/figures/circlepack5.png" height="600">
 
 ```
-circlepack    y_TOT, by(NUTS2 NUTS1 NUTS0) format(%15.0fc) nolab pad(0.06)
+circlepack y_TOT, by(NUTS2 NUTS1 NUTS0) format(%15.0fc) nolab pad(0.06)
 ```
 
 <img src="/figures/circlepack6.png" height="600">
 
 ```
-circlepack    y_TOT if NUTS0=="AT", by(NUTS3 NUTS2) ///
+circlepack y_TOT if NUTS0=="AT", by(NUTS3 NUTS2) ///
 	addtitles noval format(%15.0fc) ///
 	title("Population of Austria at NUTS2 and NUTS3 level") circle0
 ```
@@ -151,7 +151,7 @@ circlepack    y_TOT if NUTS0=="AT", by(NUTS3 NUTS2) ///
 <img src="/figures/circlepack7.png" height="600">
 
 ```
-circlepack    y_TOT if NUTS0=="NL", by(NUTS3 NUTS2) addtitles format(%15.0fc) ///
+circlepack y_TOT if NUTS0=="NL", by(NUTS3 NUTS2) addtitles format(%15.0fc) ///
 	title("Population of Netherlands at NUTS2 and NUTS3 level")
 ```
 
@@ -159,7 +159,7 @@ circlepack    y_TOT if NUTS0=="NL", by(NUTS3 NUTS2) addtitles format(%15.0fc) //
 
 
 ```
-circlepack    y_TOT if NUTS0=="NL", by(NUTS3 NUTS2 NUTS1) ///
+circlepack y_TOT if NUTS0=="NL", by(NUTS3 NUTS2 NUTS1) ///
 	addtitles noval format(%15.0fc) ///
 	title("Population of Netherlands at NUTS1-NUTS3 level") palette(CET L10) 
 ```
@@ -167,7 +167,7 @@ circlepack    y_TOT if NUTS0=="NL", by(NUTS3 NUTS2 NUTS1) ///
 <img src="/figures/circlepack9.png" height="600">
 
 ```
-circlepack    y_TOT if NUTS0=="NL", by(NUTS3 NUTS2 NUTS1) ///
+circlepack y_TOT if NUTS0=="NL", by(NUTS3 NUTS2 NUTS1) ///
 	addtitles noval format(%15.0fc) ///
 	title("Population of Netherlands at NUTS1-NUTS3 level") palette(CET L10) points(6) pad(0.3)
 ```
@@ -175,9 +175,8 @@ circlepack    y_TOT if NUTS0=="NL", by(NUTS3 NUTS2 NUTS1) ///
 <img src="/figures/circlepack10.png" height="600">
 
 ```
-circlepack    y_TOT if NUTS0=="NL", by(NUTS3 NUTS2 NUTS1) ///
-	addtitles noval format(%15.0fc) title("Population of Netherlands at NUTS1-NUTS3 level") ///
-	palette(CET L10) points(6) pad(0.3) angle(30)
+circlepack y_TOT if NUTS0=="PT", by(NUTS3 NUTS2)  ///
+	addtitles noval format(%15.0fc) title("Population of Portugal at NUTS1-NUTS3 level") palette(CET C6) points(12) pad(0.1) 
 ```
 
 <img src="/figures/circlepack11.png" height="600">
