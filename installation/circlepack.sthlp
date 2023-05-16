@@ -1,7 +1,7 @@
 {smcl}
-{* 24Nov2022}{...}
+{* 16May2023}{...}
 {hi:help circlepack}{...}
-{right:{browse "https://github.com/asjadnaqvi/stata-circlepack":circlepack v1.01 (GitHub)}}
+{right:{browse "https://github.com/asjadnaqvi/stata-circlepack":circlepack v1.1 (GitHub)}}
 
 {hline}
 
@@ -15,8 +15,9 @@ This program implements the {it:A1.0} algorithm (Huang et. al. 2006) based on D3
 {p 8 15 2}
 
 {cmd:circlepack} {it:numvar} {ifin}, {cmd:by}({it:variables (min=1, max=3})) 
-		{cmd:[} {cmd:pad}({it:num}) {cmd:points}({it:num}) {cmd:angle}({it:num}) {cmd:circle0} {cmd:circle0c}(str) {cmd:format}(str) {cmd:palette}(string) {cmdab:addt:itles} {cmdab:noval:ues} {cmdab:nolab:els} {cmdab:labs:ize}({it:num}) 
-		  {cmd:title}({it:str}) {cmd:subtitle}({it:str}) {cmd:note}({it:str}) {cmd:scheme}({it:str}) {cmd:name}({it:str}) {cmd:]}
+        {cmd:[} {cmd:pad}({it:num}) {cmd:points}({it:num}) {cmd:angle}({it:num}) {cmd:circle0} {cmd:circle0c}(str) {cmd:format}(str) {cmd:palette}(string) {cmd:share} 
+          {cmd:labprop} {cmd:titleprop} {cmd:labscale}({it:num}) {cmdab:thresh:old}({it:num}) {cmd:fi}({it:list}) {cmdab:addt:itles} {cmdab:noval:ues} {cmdab:nolab:els} {cmdab:labs:ize}({it:num}) 
+          {cmd:title}({it:str}) {cmd:subtitle}({it:str}) {cmd:note}({it:str}) {cmd:scheme}({it:str}) {cmd:name}({it:str}) {cmd:]}
 
 
 {p 4 4 2}
@@ -29,7 +30,7 @@ The options are described as follows:
 {p2coldent : {opt circlepack} {it:numvar}}The command requires a {it:numeric variable} that contains the values.{p_end}
 
 {p2coldent : {opt by(group vars)}}At least one {it:by()} string variable needs to be specified, and a maximum of three string variables are allowed. These also are used as labels.
-The order is inner-most layer first and top-most layer last.{p_end}
+The order is parent layer first followed by child layer or more aggregated layers should be specified first.{p_end}
 
 {p2coldent : {opt pad(num)}}Add padding to the circles. Default value is {it:0.1}. A value of 0 implies no padding.{p_end}
 
@@ -39,21 +40,36 @@ If you are exporting a very large impact, value > 60 is recommended for smoother
 {p2coldent : {opt angle(num)}}Angle of the points. Default value is {it:0}. Any value specified here will rotate the points on the circle. 
 For example, if you draw hexagons, you can rotate the shapes using this option.{p_end}
 
+{p2coldent : {opt thresh:old(num)}}The value below which categories are combined in a "Rest of ..." category. Default is {opt thresh(0)}.{p_end}
+
+{p2coldent : {opt labcond(value)}}The minimum value for showing the value labels. For example, {opt labcond(20)} will only plot values greater than 20.{p_end}
+
+{p2coldent : {opt format(fmt)}}Format the values of the labels. The default option is {opt format(%12.0fc)} for values and {opt format(%5.2f)} for the {opt percent} option.{p_end}
+
+{p2coldent : {opt share}}Show percentage shares of the total instead of the actual values for all the layers.{p_end}
+
 {p2coldent : {opt circle0}}Drawing the bounding circle.{p_end}
 
 {p2coldent : {opt circle0c(str)}}Define the bounding circle color.{p_end}
 
 {p2coldent : {opt palette(str)}}Color name is any named scheme defined in the {stata help colorpalette:colorpalette} package. Default is {stata colorpalette tableau:{it:tableau}}.{p_end}
 
+{p2coldent : {opt fi(numlist max=3)}}The fill intensity of the layers in the other they are specified. The default values are {opt fi(50 75 100)}.{p_end}
+
 {p2coldent : {opt addt:itles}}Add titles to upper layers. This adds the name and value in the top left corner of the boxes.{p_end}
+
+{p2coldent : {opt titleprop}}Make the size of the box titles proportional to the area.{p_end}
+
+{p2coldent : {opt labprop}}Make the size of the labels proportional to the area.{p_end}
+
+{p2coldent : {opt labscale(num)}}This option changes how the labels are scaled. This is an advanced option and should be used cautiously. Default value is {opt labscale(0.5)}.
+The scaling is sensitive to change in this value so modify in small increments.{p_end}
 
 {p2coldent : {opt noval:ues}}Do not add the values in the inner-most boxes. If the graph is too crowded, this option might help.{p_end}
 
 {p2coldent : {opt nolab:els}}Do not add anylabels. This gives just boxes without any numbers.{p_end}
 
-{p2coldent : {opt labs:ize(str)}}The size of the labels. The default value is {it:1.2}.{p_end}
-
-{p2coldent : {opt format()}}Format the values of the y-axis category. The default is {it:%9.0fc}.{p_end}
+{p2coldent : {opt labs:ize(string max=3)}}The size of the labels. The default values are {opt labs(2 2 2)}. If only one value is specified, it will passed on to all the layers.{p_end}
 
 {p2coldent : {opt title, subtitle, note}}These are standard twoway graph options.{p_end}
 
@@ -65,7 +81,7 @@ For example, if you draw hexagons, you can rotate the shapes using this option.{
 
 {title:Dependencies}
 
-The {browse "http://repec.sowi.unibe.ch/stata/palettes/index.html":palette} package (Jann 2018) is required for {cmd:streamplot}:
+The {browse "http://repec.sowi.unibe.ch/stata/palettes/index.html":palette} package (Jann 2018, 2022) is required for {cmd:circlepack}:
 
 {stata ssc install palettes, replace}
 {stata ssc install colrspace, replace}
@@ -106,8 +122,8 @@ Fayssal Ayad found errors with duplicate and zero values that was causing the la
 
 {title:Package details}
 
-Version      : {bf:circlepack} v1.01
-This release : 24 Nov 2022
+Version      : {bf:circlepack} v1.1
+This release : 16 May 2023
 First release: 08 Sep 2022
 Repository   : {browse "https://github.com/asjadnaqvi/circlepack":GitHub}
 Keywords     : Stata, graph, circle packing, circlepack, A1.0
@@ -126,4 +142,14 @@ Twitter      : {browse "https://twitter.com/AsjadNaqvi":@AsjadNaqvi}
 
 {p 4 8 2}Jann, B. (2018). {browse "https://www.stata-journal.com/article.html?article=gr0075":Color palettes for Stata graphics}. The Stata Journal 18(4): 765-785.
 
+{p 4 8 2}Jann, B. (2022). {browse "https://ideas.repec.org/p/bss/wpaper/43.html":Color palettes for Stata graphics: an update}. University of Bern Social Sciences Working Papers No. 43. 
+
 {p 4 8 2}Lecomte, J. {browse "https://github.com/elmotec/circlify":Python circlify}.
+
+{title:Other visualization packages}
+
+{psee}
+    {helpb arcplot}, {helpb alluvial}, {helpb bimap}, {helpb bumparea}, {helpb bumpline}, {helpb circlebar}, {helpb circlepack}, {helpb clipgeo}, {helpb delaunay}, {helpb joyplot}, 
+	{helpb marimekko}, {helpb sankey}, {helpb schemepack}, {helpb spider}, {helpb streamplot}, {helpb sunburst}, {helpb treecluster}, {helpb treemap}
+
+

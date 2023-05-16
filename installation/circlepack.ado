@@ -1,8 +1,9 @@
 *! circlepack v1.01 (24 Nov 2022) 
 *! Asjad Naqvi (asjadnaqvi@gmail.com)
 
-*v1.01 (24 Nov 2022). Minor fixes to prevent duplicate value errors. Checks for 0s and negatives. Improved precision.
-*v1.0  (08 Sep 2022). First release.
+*v1.1  (16 May 2023): Major update. Several features added to make it more compatible with treemap.
+*v1.01 (24 Nov 2022): Minor fixes to prevent duplicate value errors. Checks for 0s and negatives. Improved precision.
+*v1.0  (08 Sep 2022): First release.
 
 
 cap prog drop circlepack
@@ -13,7 +14,8 @@ prog def circlepack, sortpreserve
 	
 	syntax varlist(numeric max=1) [if] [in], by(varlist min=1 max=3)	 ///   
 		[ pad(real 0.1) angle(real 0) points(real 60) circle0 circle0c(string) format(str) palette(string) ADDTitles NOVALues NOLABels cond(string)  ]		///
-		[ LABSize(real 1.2) LABColor(string) title(passthru) subtitle(passthru) note(passthru) scheme(passthru) name(passthru) ]	
+		[ LABColor(string) title(passthru) subtitle(passthru) note(passthru) scheme(passthru) name(passthru) ] ///
+		[ share THRESHold(numlist max=1 >=0) labprop labscale(real 0.5) LABSize(string) titleprop  fi(numlist max=3) labcond(real 0) ]  // v1.1 options
 	
 	marksample touse, strok
 	
@@ -26,13 +28,11 @@ prog def circlepack, sortpreserve
 	
 
 qui {	
-  preserve	
+preserve	
 	keep if `touse'
 	
 	qui summ `varlist', meanonly
 	if r(min) <= 0 noi di in yellow "`varlist' contains zeros or negative values. These have been dropped."
-	
-	
 	drop if `varlist' <= 0	
 	
 	local length : word count `by'
@@ -48,14 +48,21 @@ qui {
 		
 		collapse (sum) `varlist', by(`var0') 
 		
+		if "`threshold'"!="" {
+			replace `var0' = "Rest of `var0'" if `varlist' <= `threshold'
+		}
+		
+		collapse (sum) `varlist', by(`var0') 		
+		
+		
 		gen double var0_v = `varlist'
 		gsort -var0_v `var0'  // stabilize the sort
 	}
 
 	if `length' == 2 {
 		tokenize `by'
-		local var0 `2'
-		local var1 `1'
+		local var0 `1'
+		local var1 `2'
 		
 		cap confirm string var `var0'
 			if _rc!=0 {
@@ -70,6 +77,15 @@ qui {
 			}	
 		
 		collapse (sum) `varlist', by(`var0' `var1') 
+		
+		if "`threshold'"!="" {
+			levelsof `var0', local(lvls)
+			foreach x of local lvls {
+				replace `var1' = "Rest of `x'" if `varlist' <= `threshold' & `var0'=="`x'"
+			}
+		}
+		
+		collapse (sum) `varlist', by(`var0' `var1') 
 
 		bysort `var0': egen var0_v = sum(`varlist')
 		gen double var1_v = `varlist'
@@ -81,9 +97,9 @@ qui {
 
 	if `length' == 3 {
 		tokenize `by'
-		local var0 `3'
+		local var0 `1'
 		local var1 `2'
-		local var2 `1'
+		local var2 `3'
 		
 		cap confirm string var `var0'
 			if _rc!=0 {
@@ -104,6 +120,13 @@ qui {
 			}				
 		
 		
+		if "`threshold'"!="" {
+			levelsof `var1', local(lvls)
+			foreach x of local lvls {
+				replace `var2' = "Rest of `x'" if `varlist' <= `threshold' & `var1'=="`x'"
+			}
+		}
+		
 		collapse (sum) `varlist', by(`var0' `var1' `var2')
 		
 		bysort `var0': egen var0_v = sum(`varlist')
@@ -120,9 +143,6 @@ qui {
 
 	egen var0_t = tag(`var0')
 	gen  double var0_o = sum(`var0' != `var0'[_n-1]) 
-	
-	*levelsof var0_o
-	*replace var0_o = r(r) - var0_o + 1
 	
 	if `length' > 1 {
 			
@@ -148,16 +168,24 @@ qui {
 	local radius = 10 // this radius is hardcoded
 	mata: eps = 1e-9; enclosure0 = (0, 0, `radius'); angle = `angle'; pad = `pad'; obs = `points'
 	
-	if "`format'" == "" local format %9.0fc
+	if "`format'"  == "" {
+		if "`share'"  == "" {
+			local format %12.0fc
+		}
+		else {
+			local format %5.2f
+		}
+	}
 
 	**********************
 	** process level 0  **
 	**********************
 
 		mata data = select(st_data(., ("var0_v")), st_data(., "var0_t=1"))
+		mata datasum = sum(data[.,1])
 		mata c0 = _circlify_level(data, enclosure0); p0 = getcoords2(c0, angle, obs)
 		mata st_matrix("p0", p0)	
-		mata st_matrix("p0_lab", (c0[.,1..2], data))
+		mata st_matrix("p0_lab", (c0[.,1..2], data, data :/ datasum))
 
 		
 	**********************
@@ -175,7 +203,7 @@ qui {
 			mata mydata = select(mydata[.,1], mydata[.,2] :== `i')		
 			mata c1_`i' = _circlify_level(mydata, c0[`i',.]); p1_`i' = getcoords2(c1_`i', angle, obs)			
 			mata st_matrix("p1_`i'", p1_`i')	
-			mata st_matrix("p1_`i'_lab", (c1_`i'[.,1..2], mydata))
+			mata st_matrix("p1_`i'_lab", (c1_`i'[.,1..2], mydata, mydata :/ datasum))
 		}		
 	}
 	
@@ -198,7 +226,7 @@ qui {
 				mata mydata = select(mydata[.,1], mydata[.,2] :== `i' :& mydata[.,3] :== `j')		
 				mata c2_`i'_`j' = _circlify_level(mydata, c1_`i'[`j',.]); p2_`i'_`j' = getcoords2(c2_`i'_`j', angle, obs)
 				mata st_matrix("p2_`i'_`j'", p2_`i'_`j')				
-				mata st_matrix("p2_`i'_`j'_lab", (c2_`i'_`j'[.,1..2], mydata))
+				mata st_matrix("p2_`i'_`j'_lab", (c2_`i'_`j'[.,1..2], mydata, mydata :/ datasum))
 			}
 		}	
 	}
@@ -221,8 +249,7 @@ qui {
 	svmat p0, n(col)
 	
 	// level 0 labels
-	mat colnames p0_lab = "_l0_xmid" "_l0_ymid" "_l0_val"
-	mat li p0_lab
+	mat colnames p0_lab = "_l0_xmid" "_l0_ymid" "_l0_val" "_l0_share"
 	svmat p0_lab, n(col)
 	
 	gen _l0_lab1 = ""
@@ -232,11 +259,19 @@ qui {
 	foreach i of local l0  {
 	
 		sum id if var0_o == `i' & var0_t == 1, meanonly
-		replace _l0_lab1 = `var0'[r(mean)] in `i'
+		replace _l0_lab1 = `var0'[r(mean)] in `i'  if _l0_val >= `labcond'
 	}
 
-	gen _l0_lab0 = "{it:" + _l0_lab1 + " (" + string(_l0_val, "`format'") + ")}"  in 1/`item0'
-	gen _l0_lab2 = string(_l0_val, "`format'") in 1/`item0'
+	local mylab cond("`share'"=="", _l0_val, _l0_share * 100)
+	
+	if "`share'"=="" {
+		gen  _l0_lab0 = "{it:" + _l0_lab1 + " (" + string(`mylab', "`format'") + ")}" in 1/`item0' if _l0_val >= `labcond'  
+		gen  _l0_lab2 = string(`mylab', "`format'") in 1/`item0'  if _l0_val >= `labcond' 
+	}
+	else {
+		gen  _l0_lab0 = "{it:" + _l0_lab1 + " (" + string(`mylab', "`format'") + "%)}" in 1/`item0'  if _l0_val >= `labcond'
+		gen  _l0_lab2 = string(`mylab', "`format'") + "%" in 1/`item0'  if _l0_val >= `labcond' 
+	}
 	
 	*** level 1
 	
@@ -251,7 +286,7 @@ qui {
 		
 		
 		// level 1 labels
-		mat colnames p1_`i'_lab = "_l1_`i'_xmid" "_l1_`i'_ymid" "_l1_`i'_val"
+		mat colnames p1_`i'_lab = "_l1_`i'_xmid" "_l1_`i'_ymid" "_l1_`i'_val" "_l1_`i'_share"
 		svmat p1_`i'_lab, n(col)
 		
 		gen _l1_`i'_lab1 = ""
@@ -261,11 +296,19 @@ qui {
 			foreach j of local l1  {
 				
 				sum id if var0_o == `i' & var1_o == `j' & var1_t == 1, meanonly
-				replace _l1_`i'_lab1 = `var1'[r(mean)] in `j'
+				replace _l1_`i'_lab1 = `var1'[r(mean)] in `j'   if _l1_`i'_val >= `labcond'
 			}
 		
-		gen _l1_`i'_lab0 = "{it:" + _l1_`i'_lab1 + " (" + string(_l1_`i'_val, "`format'") + ")}"  in 1/`item1'
-		gen _l1_`i'_lab2 = string(_l1_`i'_val, "`format'") in 1/`item1'
+		local mylab cond("`share'"=="", _l1_`i'_val, _l1_`i'_share * 100)			
+		
+			if "`share'"=="" {
+				gen  _l1_`i'_lab0 = "{it:" + _l1_`i'_lab1 + " (" + string(`mylab', "`format'") + ")}"  in 1/`item1' if _l1_`i'_val >= `labcond' 
+				gen  _l1_`i'_lab2 = string(`mylab', "`format'")  in 1/`item1'  if _l1_`i'_val >= `labcond' 
+			}
+			else {
+				gen  _l1_`i'_lab0 = "{it:" + _l1_`i'_lab1 + " (" + string(`mylab', "`format'") + "%)}"  in 1/`item1' if _l1_`i'_val >= `labcond'  
+				gen  _l1_`i'_lab2 = string(`mylab', "`format'") + "%"  in 1/`item1'  if _l1_`i'_val >= `labcond' 
+			}
 		}
 	}
 	
@@ -284,7 +327,7 @@ qui {
 			mat colnames p2_`i'_`j' =  "_l2_`i'_`j'_x" "_l2_`i'_`j'_y" "_l2_`i'_`j'_id" "_l2_`i'_`j'_ymax"
 			svmat p2_`i'_`j', n(col)
 			
-			mat colnames p2_`i'_`j'_lab = "_l2_`i'_`j'_xmid" "_l2_`i'_`j'_ymid" "_l2_`i'_`j'_val"
+			mat colnames p2_`i'_`j'_lab = "_l2_`i'_`j'_xmid" "_l2_`i'_`j'_ymid" "_l2_`i'_`j'_val" "_l2_`i'_`j'_share"
 			svmat p2_`i'_`j'_lab, n(col)
 			
 			gen _l2_`i'_`j'_lab1 = ""
@@ -294,10 +337,23 @@ qui {
 					foreach k of local l2  {	
 						
 						sum id if var0_o == `i' & var1_o==`j'& var2_o==`k' &  var2_t == 1, meanonly
-						replace _l2_`i'_`j'_lab1 = `var2'[r(mean)] in `k'
+						replace _l2_`i'_`j'_lab1 = `var2'[r(mean)] in `k'  if _l2_`i'_`j'_val >= `labcond'
 					}
 			
-			gen  _l2_`i'_`j'_lab2 = string(_l2_`i'_`j'_val, "`format'") in 1/`item2'
+			
+				local mylab cond("`share'"=="", _l2_`i'_`j'_val, _l2_`i'_`j'_share * 100)	
+				
+				if "`share'"=="" {
+					gen  _l2_`i'_`j'_lab0 = "{it:" + _l2_`i'_`j'_lab1 + " (" + string(`mylab', "`format'") + ")}"  in 1/`item2' if _l2_`i'_`j'_val >= `labcond'
+					gen  _l2_`i'_`j'_lab2 = string(`mylab', "`format'") in 1/`item2'  if _l2_`i'_`j'_val >= `labcond'
+				}
+				else {
+					gen  _l2_`i'_`j'_lab0 = "{it:" + _l2_`i'_`j'_lab1 + " (" + string(`mylab', "`format'") + "%)}"  in 1/`item2' if _l2_`i'_`j'_val >= `labcond'
+					gen  _l2_`i'_`j'_lab2 = string(`mylab', "`format'") + "%" in 1/`item2'  if _l2_`i'_`j'_val >= `labcond'
+				}			
+			
+			
+			
 			}	
 		}
 	}
@@ -320,18 +376,63 @@ qui {
 	
 	// control the fill intensities
 	
-	local fi0 = 100
-	
-	if `length' == 2 {
-		local fi0 = 60
-		local fi1 = 90
-	}	
-	
-	if `length' == 3 {
-		local fi0 = 50
-		local fi1 = 75
-		local fi2 = 100
+	if "`fi'" != "" {
+		tokenize `fi'
+		local filen : word count `fi'
+		
+		local fi2 `1'
+		local fi1 `1'
+		local fi0 `1'
+
+		if `filen' > 1 {
+			local fi1 `2'
+			local fi2 `2'
+		}
+			
+		if `filen' > 2 {
+			local fi1 `2'
+			local fi2 `3'
+		}
 	}
+	else {
+		local fi0 100
+		
+		if `length' == 2 {
+			local fi0 = 60
+			local fi1 = 90
+		}	
+		
+		if `length' == 3 {
+			local fi0 = 50
+			local fi1 = 75
+			local fi2 = 100
+		}	
+	}	
+
+	if "`labsize'" != "" {
+		tokenize `labsize'
+		local lslen : word count `labsize'
+		
+		local ls0 `1'
+		local ls1 `1'
+		local ls2 `1'
+
+		if `lslen' > 1 {
+			local ls1 `2'
+			local ls2 `2'
+		}
+			
+		if `lslen' > 2 {
+			local ls1 `2'
+			local ls2 `3'
+		}
+	}
+	else {
+		local ls0 2
+		local ls1 2
+		local ls2 2
+	}		
+	
 	
 	if "labcolor" == "" local labcolor black
 
@@ -340,26 +441,41 @@ qui {
 	*** level 0 ***
 	***************
 	
-	// noi di "Level 0"
 	
 	levelsof var0_o, local(l0)
 	local lvl0 = `r(r)'
 	
 	foreach i of local l0  {	
+	
+			if "`titleprop'" != "" {
+				local labt0 = max((2 * `ls0' * _l0_share[`i']^`labscale'),0)
+			}
+			else {
+				local labt0 = `ls0'
+			}	
+			
+			if "`labprop'" != "" {
+				local labs0 = (2 * `ls0' * _l0_share[`i']^`labscale')
+			}
+			else {
+				local labs0 = `ls0'
+			}	
 		
 		colorpalette `palette', nograph n(`lvl0') `poptions'
 		
 		local c0 `c0' (area _l0_y _l0_x if _l0_id==`i', nodropbase fi(`fi0') fc("`r(p`i')'") lc(black) lw(0.03)) ||
+
+		local c0_box `c0_box' (scatter _l0_ymax _l0_xmid in `i', mc(none) mlab(_l0_lab0) mlabpos(12) mlabgap(0.8) mlabsize(`labt0') mlabc(`labcolor')) 
+		
+		local c0_lab `c0_lab' (scatter _l0_ymid _l0_xmid in `i', mc(none) mlab(_l0_lab1) mlabpos(0)               mlabsize(`labs0') mlabc(`labcolor') ) || 
 	
+		if "`novalues'" == "" local c0_lab `c0_lab'  (scatter _l0_ymid _l0_xmid in `i', mc(none) mlab(_l0_lab2) mlabgap(0) mlabpos(6) mlabsize(`labs0') mlabc(`labcolor') )
+			
+		
 	}
 	
 
-	local c0_box `c0_box' (scatter _l0_ymax _l0_xmid, mc(none) mlab(_l0_lab0) mlabpos(12) mlabgap(0.8) mlabsize(`labsize') mlabc(`labcolor')) 
-		
-	local c0_lab `c0_lab' (scatter _l0_ymid _l0_xmid, mc(none) mlab(_l0_lab1) mlabpos(0)            mlabsize(`labsize') mlabc(`labcolor') ) || 
-	
-	if "`novalues'" == "" local c0_lab `c0_lab'  (scatter _l0_ymid _l0_xmid, mc(none) mlab(_l0_lab2) mlabgap(0) mlabpos(6) mlabsize(`labsize') mlabc(`labcolor') )
-	
+
 
 	***************
 	*** level 1 ***
@@ -371,20 +487,34 @@ qui {
 		foreach i of local l0  {
 			
 			levelsof var1_o if var0_o==`i', local(l1)
-			foreach j of local l1  {	
+			foreach j of local l1  {
+			
+				if "`titleprop'" != "" {
+					local labt1 = max((2 * `ls1' * _l1_`i'_share[`j']^`labscale'),0)
+				}
+				else {
+					local labt1 = `ls1'
+				}				
+							
+				if "`labprop'" != "" {
+					local labs1 = max((2 * `ls1' * _l1_`i'_share[`j']^`labscale'),0)
+				}
+				else {
+					local labs1 = `ls1'
+				}			
 				
 				colorpalette `palette', nograph n(`lvl0') `poptions'
 				
 				local c1 `c1' (area _l1_`i'_y _l1_`i'_x  if _l1_`i'_id==`j', nodropbase fi(`fi1') fc("`r(p`i')'") lc(black) lw(0.03)) ||
-		
-			}
 
-		local c1_box `c1_box' (scatter _l1_`i'_ymax _l1_`i'_xmid, mc(none) mlab(_l1_`i'_lab0) mlabpos(12) mlabgap(0) mlabsize(`labsize') mlabc(`labcolor') ) 
-				
-		local c1_lab `c1_lab' (scatter _l1_`i'_ymid _l1_`i'_xmid, mc(none) mlab(_l1_`i'_lab1) mlabpos(0) mlabsize(`labsize') mlabc(`labcolor') ) || 
+				local c1_box `c1_box' (scatter _l1_`i'_ymax _l1_`i'_xmid  in `j', mc(none) mlab(_l1_`i'_lab0) mlabpos(12) mlabgap(0) mlabsize(`labt1') mlabc(`labcolor') ) 
+					
+				local c1_lab `c1_lab' (scatter _l1_`i'_ymid _l1_`i'_xmid  in `j', mc(none) mlab(_l1_`i'_lab1) mlabpos(0) mlabsize(`labs1') mlabc(`labcolor') ) || 
 		
-		if "`novalues'" == "" local c1_lab `c1_lab' (scatter _l1_`i'_ymid _l1_`i'_xmid, mc(none) mlab(_l1_`i'_lab2) mlabpos(6) mlabgap(0) mlabsize(`labsize') mlabc(`labcolor') ) ||
-	
+				if "`novalues'" == "" local c1_lab `c1_lab' (scatter _l1_`i'_ymid _l1_`i'_xmid  in `j', mc(none) mlab(_l1_`i'_lab2) mlabpos(6) mlabgap(0) mlabsize(`labs1') mlabc(`labcolor') ) ||
+					
+
+			}
 		}
 	}
 	
@@ -392,7 +522,6 @@ qui {
 	*** level 2 ***
 	***************
 
-	// noi di "Level 2"
 	
 	if `length' > 2 {	
 	
@@ -404,19 +533,27 @@ qui {
 							
 				levelsof var2_o if var0_o==`i' & var1_o==`j', local(l2)
 				foreach k of local l2  {	
+				
+					
+				
+					if "`labprop'" != "" {
+						local labs2 = max((2 * `ls2' * _l2_`i'_`j'_share[`k']^`labscale'),0)
+					}
+					else {
+						local labs2 = `ls2'
+					}				
+					
+
 
 					colorpalette `palette', nograph n(`lvl0') `poptions'
 					
 					local c2 `c2' (area _l2_`i'_`j'_y _l2_`i'_`j'_x if _l2_`i'_`j'_id==`k', nodropbase fi(`fi2') fc("`r(p`i')'") lc(black) lw(0.03)) ||
 		
-				}
+					local c2_lab `c2_lab' (scatter _l2_`i'_`j'_ymid _l2_`i'_`j'_xmid in `k', mc(none) mlab(_l2_`i'_`j'_lab1) mlabpos(0) mlabsize(`labs2') mlabc(`labcolor') ) || 
 			
-			local c2_lab `c2_lab' (scatter _l2_`i'_`j'_ymid _l2_`i'_`j'_xmid, mc(none) mlab(_l2_`i'_`j'_lab1) mlabpos(0) mlabsize(`labsize') mlabc(`labcolor') ) || 
-			
-			
-			if "`novalues'" == "" local c2_lab `c2_lab' (scatter _l2_`i'_`j'_ymid _l2_`i'_`j'_xmid, mc(none) mlab(_l2_`i'_`j'_lab2) mlabpos(6) mlabgap(0) mlabsize(`labsize') mlabc(`labcolor') ) ||
+					if "`novalues'" == "" local c2_lab `c2_lab' (scatter _l2_`i'_`j'_ymid _l2_`i'_`j'_xmid in `k', mc(none) mlab(_l2_`i'_`j'_lab2) mlabpos(6) mlabgap(0) mlabsize(`labs2') mlabc(`labcolor') ) ||
 				
-			
+				}
 			}
 		}
 	}
@@ -439,22 +576,21 @@ qui {
 	****************
  
  
+	if `length' == 3 {
+		local mylab  `c2_lab'	
+		if "`addtitles'" != "" local boxlab `c1_box' || `c0_box'
+	} 
+	else if `length' == 2 {
+		local mylab  `c1_lab'
+		if "`addtitles'" != "" local boxlab `c0_box'
+	}
+	else {
+		local mylab  `c0_lab'
+		local boxlab
+	}
  
- 		if `length' == 3 {
-			local mylab  `c2_lab'	
-			if "`addtitles'" != "" local boxlab `c1_box' || `c0_box'
-		} 
-		else if `length' == 2 {
-			local mylab  `c1_lab'
-			if "`addtitles'" != "" local boxlab `c0_box'
-		}
-		else {
-			local mylab  `c0_lab'
-			local boxlab
-		}
  
- 
-		if "`nolabels'" != "" local mylab
+	if "`nolabels'" != "" local mylab
  
  
 	twoway ///
@@ -471,8 +607,6 @@ qui {
 			xlabel(-`radius' `radius', nogrid) ylabel(-`radius' `radius', nogrid) ///
 				`title' `subtitle' `note' `scheme' `name'
 			
-	
-	
 	
 
 restore		
@@ -1126,6 +1260,7 @@ mata:  // getcoords
 			coords[a::b, 1..2] = returnbounds(data[i,.], angle, obs)
 			coords[a::b, 3] = J(obs,1,i)
 			coords[i, 4] =  max(select(coords[.,2], coords[.,3] :== i))		
+
 		}
 	
 		return (coords)

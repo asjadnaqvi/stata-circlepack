@@ -3,6 +3,6 @@ authors:
 - family-names: "Naqvi"
   given-names: "Asjad"
 title: "Stata package ``circlepack''"
-version: 1.01
-date-released: 2022-11-01
+version: 1.1
+date-released: 2023-5-16
 url: "https://github.com/asjadnaqvi/stata-circlepack"
