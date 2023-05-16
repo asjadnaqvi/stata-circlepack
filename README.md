@@ -218,6 +218,13 @@ circlepack    pop if NUTS0=="ES", by(NUTS1 NUTS2 NUTS3)  nolab fi(40 60 100)
 
 <img src="/figures/circlepack19.png" height="600">
 
+
+```
+circlepack    pop if NUTS0=="ES", by(NUTS1 NUTS3) addtitle labprop titleprop threshold(1000000) share
+```
+
+<img src="/figures/circlepack20.png" height="600">
+
 ## Feedback
 
 Please open an [issue](https://github.com/asjadnaqvi/stata-circlepack/issues) to report errors, feature enhancements, and/or other requests. 
