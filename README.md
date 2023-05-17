@@ -88,21 +88,21 @@ use "https://github.com/asjadnaqvi/stata-circlepack/blob/main/data/demo_r_pjangr
 
 
 ```
-circlepack pop, by(NUTS0) format(%15.0fc) title("Population of EU 27 countries")
+circlepack pop, by(NUTS0) format(%15.0fc) title("Population of European countries")
 ```
 
 <img src="/figures/circlepack1.png" height="600">
 
 
 ```
-circlepack pop, by(NUTS0) title("Population of EU 27 countries") noval
+circlepack pop, by(NUTS0) title("Population of European countries") noval
 ```
 
 <img src="/figures/circlepack2.png" height="600">
 
 
 ```
-circlepack pop, by(NUTS0) title("Population of EU 27 countries") circle0 noval
+circlepack pop, by(NUTS0) title("Population of European countries") circle0 noval
 ```
 
 <img src="/figures/circlepack3.png" height="600">
