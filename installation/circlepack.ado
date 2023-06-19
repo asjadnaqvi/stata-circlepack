@@ -1,4 +1,4 @@
-*! circlepack v1.01 (24 Nov 2022) 
+*! circlepack v1.1 (16 May 2023) 
 *! Asjad Naqvi (asjadnaqvi@gmail.com)
 
 *v1.1  (16 May 2023): Major update. Several features added to make it more compatible with treemap.
