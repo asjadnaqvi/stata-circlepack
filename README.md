@@ -241,7 +241,7 @@ Please open an [issue](https://github.com/asjadnaqvi/stata-circlepack/issues) to
 
 ## Change log
 
-**v1.0 (16 May 2023)**
+**v1.1 (16 May 2023)**
 - Major update with several new options added to align it with the `treemap` package.
 - `labprop`, `titleprop`, `labscale()`, `threshold()`, `fi()`, `share` options added.
 - Minor fixes to the code.
