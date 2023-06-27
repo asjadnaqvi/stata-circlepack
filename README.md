@@ -4,6 +4,12 @@
 ![StataMin](https://img.shields.io/badge/stata-2015-blue) ![issues](https://img.shields.io/github/issues/asjadnaqvi/stata-circlepack) ![license](https://img.shields.io/github/license/asjadnaqvi/stata-circlepack) ![Stars](https://img.shields.io/github/stars/asjadnaqvi/stata-circlepack) ![version](https://img.shields.io/github/v/release/asjadnaqvi/stata-circlepack) ![release](https://img.shields.io/github/release-date/asjadnaqvi/stata-circlepack)
 
 
+---
+
+[Installation](#Installation) | [Syntax](#Syntax) | [Examples](#Examples) | [Feedback](#Feedback) | [Change log](#Change-log)
+
+---
+
 # circlepack v1.1
 (16 May 2023)
 
@@ -233,7 +239,7 @@ circlepack    pop if NUTS0=="ES", by(NUTS1 NUTS3) addtitle labprop titleprop thr
 Please open an [issue](https://github.com/asjadnaqvi/stata-circlepack/issues) to report errors, feature enhancements, and/or other requests. 
 
 
-## Versions
+## Change log
 
 **v1.0 (16 May 2023)**
 - Major update with several new options added to align it with the `treemap` package.
