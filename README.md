@@ -11,7 +11,7 @@
 ---
 
 # circlepack v1.2
-(16 May 2023)
+(15 Jan 2024)
 
 A Stata package for circle packing. It is based on D3's [packEnclose](https://observablehq.com/@d3/d3-packenclose) and Python's [circlify](https://github.com/elmotec/circlify) algorithms.
 
