@@ -59,7 +59,7 @@ graph set window fontface "Arial Narrow"
 
 ## Syntax
 
-The syntax for v1.1 is as follows:
+The syntax for the latest version is as follows:
 
 ```
 circlepack numvar [if] [in], by(variables (min=1, max=3)) 
@@ -77,9 +77,7 @@ The most basic use is as follows:
 circlepack numvar, over(variable(s))
 ```
 
-
 where `numvar` is a numeric variable, and `over()` are upto three variables, defined from more aggregate to finer levels.
-
 
 
 ## Examples
