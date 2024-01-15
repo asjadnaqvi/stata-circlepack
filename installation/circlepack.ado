@@ -1,6 +1,7 @@
-*! circlepack v1.1 (16 May 2023) 
+*! circlepack v1.2 (15 Jan 2024) 
 *! Asjad Naqvi (asjadnaqvi@gmail.com)
 
+*v1.2  (15 Jan 2024): minor cleanups, updated dependencies, bug fixes.  
 *v1.1  (16 May 2023): Major update. Several features added to make it more compatible with treemap.
 *v1.01 (24 Nov 2022): Minor fixes to prevent duplicate value errors. Checks for 0s and negatives. Improved precision.
 *v1.0  (08 Sep 2022): First release.
@@ -21,6 +22,13 @@ prog def circlepack, sortpreserve
 	
 	
 	// check for dependencies
+	capture findfile colorpalette.ado
+	if _rc != 0 {
+		display as error "The {bf:palettes} package is missing. Install the {stata ssc install palettes, replace:palettes} and {stata ssc install colrspace, replace:colrspace} packages."
+		exit 198
+	}
+	
+	
 	cap findfile carryforward.ado
 	if _rc != 0 {
 		qui ssc install carryforward, replace
@@ -434,7 +442,7 @@ preserve
 	}		
 	
 	
-	if "labcolor" == "" local labcolor black
+	if "`labcolor'" == "" local labcolor black
 
 	
 	***************

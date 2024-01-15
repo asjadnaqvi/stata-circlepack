@@ -1,7 +1,7 @@
 {smcl}
-{* 16May2023}{...}
+{* 15Jan2024}{...}
 {hi:help circlepack}{...}
-{right:{browse "https://github.com/asjadnaqvi/stata-circlepack":circlepack v1.1 (GitHub)}}
+{right:{browse "https://github.com/asjadnaqvi/stata-circlepack":circlepack v1.2 (GitHub)}}
 
 {hline}
 
@@ -122,8 +122,8 @@ Fayssal Ayad found errors with duplicate and zero values that was causing the la
 
 {title:Package details}
 
-Version      : {bf:circlepack} v1.1
-This release : 16 May 2023
+Version      : {bf:circlepack} v1.2
+This release : 15 Jan 2023
 First release: 08 Sep 2022
 Repository   : {browse "https://github.com/asjadnaqvi/circlepack":GitHub}
 Keywords     : Stata, graph, circle packing, circlepack, A1.0

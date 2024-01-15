@@ -10,7 +10,7 @@
 
 ---
 
-# circlepack v1.1
+# circlepack v1.2
 (16 May 2023)
 
 A Stata package for circle packing. It is based on D3's [packEnclose](https://observablehq.com/@d3/d3-packenclose) and Python's [circlify](https://github.com/elmotec/circlify) algorithms.
@@ -25,7 +25,7 @@ The SSC version (**v1.1**):
 ssc install circlepack, replace
 ```
 
-Or it can be installed from GitHub (**v1.1**):
+Or it can be installed from GitHub (**v1.2**):
 
 ```
 net install circlepack, from("https://raw.githubusercontent.com/asjadnaqvi/stata-circlepack/main/installation/") replace
@@ -240,6 +240,10 @@ Please open an [issue](https://github.com/asjadnaqvi/stata-circlepack/issues) to
 
 
 ## Change log
+
+**v1.2 (15 Jan 2024)**
+- Fixed several local bugs.
+- Code clean ups.
 
 **v1.1 (16 May 2023)**
 - Major update with several new options added to align it with the `treemap` package.
