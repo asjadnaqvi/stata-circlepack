@@ -1,7 +1,7 @@
-v 1.2
+v 1.21
 d CIRCLEPACK: A Stata package for circle packing.
 d
-d Distribution-Date: 20240115
+d Distribution-Date: 20260607
 d
 d Asjad Naqvi, 
 d asjadnaqvi@gmail.com

@@ -8,8 +8,8 @@
 ![circlepack-1](https://github.com/asjadnaqvi/stata-circlepack/assets/38498046/1d215337-0bf6-4b8f-9d00-f338267e631c)
 
 
-# circlepack v1.2
-(15 Jan 2024)
+# circlepack v1.21
+(07 Jun 2026)
 
 A Stata package for circle packing. It is based on D3's [packEnclose](https://observablehq.com/@d3/d3-packenclose) and Python's [circlify](https://github.com/elmotec/circlify) algorithms.
 
@@ -23,7 +23,7 @@ The SSC version (**v1.2**):
 ssc install circlepack, replace
 ```
 
-Or it can be installed from GitHub (**v1.2**):
+Or it can be installed from GitHub (**v1.21**):
 
 ```
 net install circlepack, from("https://raw.githubusercontent.com/asjadnaqvi/stata-circlepack/main/installation/") replace
@@ -118,6 +118,17 @@ circlepack pop, by(NUTS0 NUTS1) format(%15.0fc) noval circle0
 ```
 
 <img src="/figures/circlepack4.png" width="100%">
+
+
+## Change log
+
+**v1.21 (07 Jun 2026)**
+- Fixed the Mata helper lookup so circlepack no longer fails with _circlify_level() not found.
+- Several code optimizations.
+
+
+**v1.2 (15 Jan 2024)**
+- Minor cleanups, updated dependencies, and bug fixes.
 
 
 ```

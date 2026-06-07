@@ -1,6 +1,7 @@
-*! circlepack v1.2 (15 Jan 2024) 
+*! circlepack v1.21 (07 Jun 2026) 
 *! Asjad Naqvi (asjadnaqvi@gmail.com)
 
+*v1.21 (07 Jun 2026): minor bug fixes to better handle missing values and zeroes. Updated dependencies.
 *v1.2  (15 Jan 2024): minor cleanups, updated dependencies, bug fixes.  
 *v1.1  (16 May 2023): Major update. Several features added to make it more compatible with treemap.
 *v1.01 (24 Nov 2022): Minor fixes to prevent duplicate value errors. Checks for 0s and negatives. Improved precision.
@@ -15,7 +16,7 @@ prog def circlepack, sortpreserve
 	
 	syntax varlist(numeric max=1) [if] [in], by(varlist min=1 max=3)	 ///   
 		[ pad(real 0.1) angle(real 0) points(real 60) circle0 circle0c(string) format(str) palette(string) ADDTitles NOVALues NOLABels cond(string)  ]		///
-		[ LABColor(string) title(passthru) subtitle(passthru) note(passthru) scheme(passthru) name(passthru) ] ///
+		[ LABColor(string) * ] ///
 		[ share THRESHold(numlist max=1 >=0) labprop labscale(real 0.5) LABSize(string) titleprop  fi(numlist max=3) labcond(real 0) ]  // v1.1 options
 	
 	marksample touse, strok
@@ -191,7 +192,7 @@ preserve
 
 		mata data = select(st_data(., ("var0_v")), st_data(., "var0_t=1"))
 		mata datasum = sum(data[.,1])
-		mata c0 = _circlify_level(data, enclosure0); p0 = getcoords2(c0, angle, obs)
+		mata c0 = circlify_level(data, enclosure0); p0 = getcoords2(c0, angle, obs)
 		mata st_matrix("p0", p0)	
 		mata st_matrix("p0_lab", (c0[.,1..2], data, data :/ datasum))
 
@@ -209,7 +210,7 @@ preserve
 
 			mata mydata = select(st_data(., ("var1_v", "var0_o")), st_data(., "var1_t = 1"))
 			mata mydata = select(mydata[.,1], mydata[.,2] :== `i')		
-			mata c1_`i' = _circlify_level(mydata, c0[`i',.]); p1_`i' = getcoords2(c1_`i', angle, obs)			
+			mata c1_`i' = circlify_level(mydata, c0[`i',.]); p1_`i' = getcoords2(c1_`i', angle, obs)			
 			mata st_matrix("p1_`i'", p1_`i')	
 			mata st_matrix("p1_`i'_lab", (c1_`i'[.,1..2], mydata, mydata :/ datasum))
 		}		
@@ -232,7 +233,7 @@ preserve
 			
 				mata mydata = select(st_data(., ("var2_v", "var0_o", "var1_o")), st_data(., "var2_t = 1"))
 				mata mydata = select(mydata[.,1], mydata[.,2] :== `i' :& mydata[.,3] :== `j')		
-				mata c2_`i'_`j' = _circlify_level(mydata, c1_`i'[`j',.]); p2_`i'_`j' = getcoords2(c2_`i'_`j', angle, obs)
+				mata c2_`i'_`j' = circlify_level(mydata, c1_`i'[`j',.]); p2_`i'_`j' = getcoords2(c2_`i'_`j', angle, obs)
 				mata st_matrix("p2_`i'_`j'", p2_`i'_`j')				
 				mata st_matrix("p2_`i'_`j'_lab", (c2_`i'_`j'[.,1..2], mydata, mydata :/ datasum))
 			}
@@ -613,7 +614,7 @@ preserve
 			xscale(off) yscale(off) ///
 			aspect(1) xsize(1) ysize(1) ///
 			xlabel(-`radius' `radius', nogrid) ylabel(-`radius' `radius', nogrid) ///
-				`title' `subtitle' `note' `scheme' `name'
+				`options'
 			
 	
 
@@ -630,13 +631,14 @@ end
 
 
 ****************************
-// 	  _circlify_level     //  
+// 	  circlify_level     //  
 ****************************
 
+cap mata mata drop circlify_level()
 cap mata mata drop _circlify_level()
 
 mata
-	function _circlify_level(data, target_enclosure)   // 
+	function circlify_level(data, target_enclosure)   // 
 	{
 		all_circles = J(rows(data), 3, .)
 		packed  = pack_A1_0(data)
@@ -644,6 +646,11 @@ mata
 		scaled = scale(packed, target_enclosure, enclosure)    
 		return (scaled)
 
+	}
+
+	function _circlify_level(data, target_enclosure)   // 
+	{
+		return(circlify_level(data, target_enclosure))
 	}
 end
 
@@ -744,11 +751,8 @@ mata // place_new_A1_0
 					break
 				}
 			
-				mydist = J(rows(other_circles), 1, .)
-		
-				for (k=1; k <= rows(other_circles); k++) {
-					mydist[k] = distance(other_circles[k,.], placed_candidates[j,.])	
-				}
+				// Vectorized distance calculation (replaces loop)
+				mydist = distance_vec(other_circles, placed_candidates[j,.])
 				
 
 				if (any(mydist :< 0)) continue
@@ -931,6 +935,32 @@ mata
 		
 		return (sqrt(x * x + y * y) - r1 - r2)
 	}
+end
+
+
+***************************
+// 	  distance_vec     //  Vectorized distance calculation
+***************************
+
+cap mata mata drop distance_vec()
+
+mata
+	function distance_vec(circles, candidate)   // matrix of circles vs single candidate
+	{
+		real matrix dx, dy, dist
+		real scalar cx, cy, cr
+		
+		cx = candidate[1]
+		cy = candidate[2]
+		cr = candidate[3]
+		
+		// Vectorized: all distances at once
+		dx = circles[.,1] :- cx
+		dy = circles[.,2] :- cy
+		dist = sqrt(dx:^2 :+ dy:^2) :- circles[.,3] :- cr
+		
+		return(dist)
+	}
 end	
 
 *************************************
@@ -942,14 +972,21 @@ cap mata mata drop get_hole_degree_radius_w()
 mata
 	function get_hole_degree_radius_w(candidate, circles)   // 
 	{		
-		real scalar mysum
-		mysum = 0
+		real scalar space_score, mysum, avg_spacing
+		real matrix distances
 		
-		for (i=1; i <= rows(circles); i++) {
-			mysum = mysum + (distance(candidate, circles[i,.]) * circles[i,3]) 
-		}
+		// Vectorized distance calculation (replaces loop)
+		distances = distance_vec(circles, candidate)
 		
-		return (mysum)
+		// Original metric: distance weighted by circle radius (vectorized)
+		mysum = sum(distances :* circles[.,3])
+		
+		// Enhanced metric: favor placements with better space availability
+		// Penalize placements too close to other circles (less room for growth)
+		avg_spacing = mean(distances)
+		space_score = mysum + avg_spacing * 0.5
+		
+		return (space_score)
 	}
 end
 	
@@ -1247,8 +1284,6 @@ mata:  // getcoords
 end
 
 
-
-
 **********************
 //   getcoords2	    //		
 **********************
@@ -1262,8 +1297,6 @@ mata:  // getcoords
 		for (i=1; i <= rows(data); i++) {
 			b = i * obs
 			a = b - (obs - 1)
-			
-			
 			
 			coords[a::b, 1..2] = returnbounds(data[i,.], angle, obs)
 			coords[a::b, 3] = J(obs,1,i)

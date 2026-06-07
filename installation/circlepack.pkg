@@ -1,4 +1,4 @@
-v 1.2
+v 1.21
 d {bf:CIRCLEPACK}: A Stata package for circle packing.
 d
 d Requires: Stata version 15 or higher.
@@ -7,9 +7,9 @@ d KW: Stata
 d KW: graphs
 d KW: circle pack
 d
-d Distribution-Date: 20240115
+d Distribution-Date: 20260607
 d
-d This  version: 15 Jan 2024
+d This  version: 07 Jun 2026
 d First version: 08 Sep 2022
 d License: MIT
 d
