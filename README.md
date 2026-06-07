@@ -59,7 +59,7 @@ graph set window fontface "Arial Narrow"
 
 The syntax for the latest version is as follows:
 
-```
+```stata
 circlepack numvar [if] [in], by(variables (min=1, max=3)) 
         [ pad(num) points(num) angle(num) circle0 circle0c(str) format(str) palette(string) share 
           labprop titleprop labscale(num) threshold(num) fi(list) addtitles novalues nolabels labsize(num) 
@@ -71,7 +71,7 @@ See the help file `help circlepack` for details.
 
 The most basic use is as follows:
 
-```
+```stata
 circlepack numvar, over(variable(s))
 ```
 
@@ -82,7 +82,7 @@ where `numvar` is a numeric variable, and `over()` are upto three variables, def
 
 Set up the data:
 
-```
+```stata
 clear
 set scheme white_tableau
 graph set window fontface "Arial Narrow"
@@ -92,58 +92,47 @@ use "https://github.com/asjadnaqvi/stata-circlepack/blob/main/data/demo_r_pjangr
 
 
 
-```
+```stata
 circlepack pop, by(NUTS0) format(%15.0fc) title("Population of European countries")
 ```
 
 <img src="/figures/circlepack1.png" width="100%">
 
 
-```
+```stata
 circlepack pop, by(NUTS0) title("Population of European countries") noval
 ```
 
 <img src="/figures/circlepack2.png" width="100%">
 
 
-```
+```stata
 circlepack pop, by(NUTS0) title("Population of European countries") circle0 noval
 ```
 
 <img src="/figures/circlepack3.png" width="100%">
 
 
-```
+```stata
 circlepack pop, by(NUTS0 NUTS1) format(%15.0fc) noval circle0 
 ```
 
 <img src="/figures/circlepack4.png" width="100%">
 
 
-## Change log
-
-**v1.21 (07 Jun 2026)**
-- Fixed the Mata helper lookup so circlepack no longer fails with _circlify_level() not found.
-- Several code optimizations.
-
-
-**v1.2 (15 Jan 2024)**
-- Minor cleanups, updated dependencies, and bug fixes.
-
-
-```
+```stata
 circlepack pop, by(NUTS0 NUTS1) format(%15.0fc) noval addtitles
 ```
 
 <img src="/figures/circlepack5.png" width="100%">
 
-```
+```stata
 circlepack pop, by(NUTS0 NUTS1 NUTS2) format(%15.0fc) nolab pad(0.06)
 ```
 
 <img src="/figures/circlepack6.png" width="100%">
 
-```
+```stata
 circlepack pop if NUTS0=="AT", by(NUTS1 NUTS2 NUTS3) ///
 	addtitles noval format(%15.0fc) circle0 ///
 	title("Population of Austria at NUTS2 and NUTS3 level") 
@@ -151,7 +140,7 @@ circlepack pop if NUTS0=="AT", by(NUTS1 NUTS2 NUTS3) ///
 
 <img src="/figures/circlepack7.png" width="100%">
 
-```
+```stata
 circlepack pop if NUTS0=="NL", by(NUTS2 NUTS3) addtitles ///
 	format(%15.0fc) title("Population of Netherlands at NUTS2 and NUTS3 level") 
 ```
@@ -159,7 +148,7 @@ circlepack pop if NUTS0=="NL", by(NUTS2 NUTS3) addtitles ///
 <img src="/figures/circlepack8.png" width="100%">
 
 
-```
+```stata
 circlepack pop if NUTS0=="NL", by(NUTS1 NUTS2 NUTS3) ///
 	addtitles noval format(%15.0fc) title("Population of Netherlands at NUTS1-NUTS3 level") ///
 	palette(CET L10) 
@@ -167,7 +156,7 @@ circlepack pop if NUTS0=="NL", by(NUTS1 NUTS2 NUTS3) ///
 
 <img src="/figures/circlepack9.png" width="100%">
 
-```
+```stata
 circlepack pop if NUTS0=="NL", by(NUTS1 NUTS2 NUTS3)  ///
 	addtitles noval format(%15.0fc) title("Population of Netherlands at NUTS1-NUTS3 level") ///
 	palette(CET L10) points(6) pad(0.3)
@@ -175,7 +164,7 @@ circlepack pop if NUTS0=="NL", by(NUTS1 NUTS2 NUTS3)  ///
 
 <img src="/figures/circlepack10.png" width="100%">
 
-```
+```stata
 circlepack pop if NUTS0=="PT", by(NUTS2 NUTS3) ///
 	addtitles noval format(%15.0fc) title("Population of Portugal at NUTS1-NUTS3 level") ///
 	palette(CET C6) points(12) pad(0.1) 
@@ -186,56 +175,56 @@ circlepack pop if NUTS0=="PT", by(NUTS2 NUTS3) ///
 
 ### v1.1 updates
 
-```
+```stata
 circlepack    pop if NUTS0=="ES", by(NUTS1 NUTS3) addtitle
 ```
 
 <img src="/figures/circlepack12.png" width="100%">
 
-```
+```stata
 circlepack    pop if NUTS0=="ES", by(NUTS1 NUTS3) addtitle labprop titleprop
 ```
 
 <img src="/figures/circlepack13.png" width="100%">
 
-```
+```stata
 circlepack    pop if NUTS0=="ES", by(NUTS1 NUTS3) addtitle labprop titleprop labs(1.5 2.5)
 ```
 
 <img src="/figures/circlepack14.png" width="100%">
 
-```
+```stata
 circlepack    pop if NUTS0=="ES", by(NUTS1 NUTS3) addtitle labprop titleprop threshold(1000000)
 ```
 
 <img src="/figures/circlepack15.png" width="100%">
 
-```
+```stata
 circlepack    pop if NUTS0=="ES", by(NUTS1 NUTS3) addtitle labprop titleprop labcond(1000000)
 ```
 
 <img src="/figures/circlepack16.png" width="100%">
 
-```
+```stata
 circlepack    pop if NUTS0=="ES", by(NUTS1 NUTS2 NUTS3) addtitle labprop titleprop labcond(1000000)
 ```
 
 <img src="/figures/circlepack17.png" width="100%">
 
-```
+```stata
 circlepack    pop if NUTS0=="ES", by(NUTS1 NUTS2 NUTS3)  nolab fi(10 40 80)
 ```
 
 <img src="/figures/circlepack18.png" width="100%">
 
-```
+```stata
 circlepack    pop if NUTS0=="ES", by(NUTS1 NUTS2 NUTS3)  nolab fi(40 60 100)
 ```
 
 <img src="/figures/circlepack19.png" width="100%">
 
 
-```
+```stata
 circlepack    pop if NUTS0=="ES", by(NUTS1 NUTS3) addtitle labprop titleprop threshold(1000000) share
 ```
 
@@ -248,9 +237,12 @@ Please open an [issue](https://github.com/asjadnaqvi/stata-circlepack/issues) to
 
 ## Change log
 
+**v1.21 (07 Jun 2026)**
+- Fixed the Mata helper lookup so circlepack no longer fails with _circlify_level() not found.
+- Several code optimizations.
+
 **v1.2 (15 Jan 2024)**
-- Fixed several local bugs.
-- Code clean ups.
+- Minor cleanups, updated dependencies, and bug fixes.
 
 **v1.1 (16 May 2023)**
 - Major update with several new options added to align it with the `treemap` package.
