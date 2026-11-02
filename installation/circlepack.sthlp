@@ -1,7 +1,7 @@
 {smcl}
-{* 07Jun2026}{...}
+{* 02Nov2026}{...}
 {hi:help circlepack}{...}
-{right:{browse "https://github.com/asjadnaqvi/stata-circlepack":circlepack v1.21 (GitHub)}}
+{right:{browse "https://github.com/asjadnaqvi/stata-circlepack":circlepack v1.3 (GitHub)}}
 
 {hline}
 
@@ -15,9 +15,10 @@ This program implements the {it:A1.0} circle-packing algorithm based on the work
 {marker syntax}{title:Syntax}
 {p 8 15 2}
 
-{cmd:circlepack} {it:numvar} {ifin}, {cmd:by}({it:variables (min=1 max=3)}) 
+{cmd:circlepack} {it:numvar} {ifin}, {cmd:by}({it:variables (min=1)})
     {cmd:[} {cmd:pad}({it:num}) {cmd:points}({it:num}) {cmd:angle}({it:num}) {cmd:circle0} {cmd:circle0c}({it:str}) {cmd:format}({it:str}) {cmd:palette}({it:str}) {cmd:share} 
-      {cmd:labprop} {cmd:titleprop} {cmd:labscale}({it:num}) {cmdab:thresh:old}({it:num}) {cmd:fi}({it:list}) {cmdab:addt:itles} {cmdab:noval:ues} {cmdab:nolab:els} {cmdab:labs:ize}({it:num}) 
+      {cmd:labprop} {cmd:titleprop} {cmd:labscale}({it:num}) {cmdab:thresh:old}({it:num}) {cmd:fi}({it:list}) {cmdab:not:itles} {cmdab:noval:ues} {cmdab:nolab:els} {cmdab:labs:ize}({it:list})
+      {cmd:labcolor}({it:str}) {cmd:labcond}({it:num})
       {cmd:title}({it:str}) {cmd:subtitle}({it:str}) {cmd:note}({it:str}) {cmd:scheme}({it:str}) {cmd:name}({it:str}) {cmd:]}
 
 
@@ -27,15 +28,17 @@ This program implements the {it:A1.0} circle-packing algorithm based on the work
 
 {p2coldent : {opt circlepack} {it:numvar}}The command requires a {it:numeric variable} that contains the values.{p_end}
 
-{p2coldent : {opt by(group vars)}}At least one {it:by()} string variable needs to be specified, and a maximum of three string variables are allowed. These also are used as labels.
-The order is parent layer first followed by child layer or more aggregated layers should be specified first.{p_end}
+{p2coldent : {opt by(group vars)}}One or more grouping variables, ordered from parent to child. There is no package-imposed maximum depth.
+String values are used as labels; numeric variables use their numeric codes. Categories are identified by their complete parent path, so child names may repeat under different parents.
+Observations with missing values in any grouping variable are excluded, as are nonpositive or missing values of {it:numvar}.{p_end}
 
 {marker display}{dlgtab:Display options}
 
-{p2coldent : {opt pad(num)}}Add padding to the circles. Default value is {it:0.1}. A value of 0 implies no padding.{p_end}
+{p2coldent : {opt pad(num)}}Reduce each parent's available radius by this nonnegative amount before packing its children. Default is {it:0.1}; 0 implies no padding.
+Padding is absolute, not proportional. Effective padding is {cmd:min(pad, parent_radius/2)}, so small circles retain at least half their radius for children.{p_end}
 
 {p2coldent : {opt points(num)}}Number of points used to define each circle. Default value is {it:60}. A value of 3 gives triangles, 6 gives hexagons, 8 gives octagons, and so on.
-Larger values produce smoother circles.{p_end}
+Larger values produce smoother circles. The value must be an integer of at least 3.{p_end}
 
 {p2coldent : {opt angle(num)}}Rotation angle for the points on each circle. Default value is {it:0}. This can be used to rotate polygonal circle approximations.{p_end}
 
@@ -43,7 +46,8 @@ Larger values produce smoother circles.{p_end}
 
 {p2coldent : {opt share}}Show percentage shares of the total instead of the actual values for all the layers.{p_end}
 
-{p2coldent : {opt thresh:old(num)}}The value below which categories are combined in a "Rest of ..." category. Default is {opt thresh(0)}.{p_end}
+{p2coldent : {opt thresh:old(num)}}Leaf categories with aggregated values at or below this threshold are combined in a "Rest of ..." category within each complete parent path.
+Duplicate complete paths are summed before applying the threshold. Default is {opt thresh(0)}.{p_end}
 
 {marker colors}{dlgtab:Colors and palette}
 
@@ -53,26 +57,32 @@ Larger values produce smoother circles.{p_end}
 
 {p2coldent : {opt circle0c(str)}}Define the bounding circle color.{p_end}
 
-{p2coldent : {opt fi(numlist max=3)}}The fill intensity of the layers in the order they are specified. The default values are {opt fi(50 75 100)}.{p_end}
+{p2coldent : {opt fi(numlist)}}Fill intensities from 0 to 100, ordered from parent to child. Shorter lists repeat their final entry.
+Defaults are 100 for one layer, {opt fi(60 90)} for two, and {opt fi(50 75 100)} for three. At greater depths, defaults increase evenly from 50 to 100.{p_end}
 
 {marker labels}{dlgtab:Labels and text}
 
-{p2coldent : {opt addt:itles}}Add titles to upper layers. This adds the name and value in the top left corner of the boxes.{p_end}
+{p2coldent : {opt not:itles}}Suppress parent-layer titles, which are shown by default above each parent circle. Leaf labels remain centered inside the deepest circles.
+This option does not suppress the overall graph {opt title()}.{p_end}
 
-{p2coldent : {opt noval:ues}}Do not add the values in the inner-most boxes. If the graph is too crowded, this option might help.{p_end}
+{p2coldent : {opt noval:ues}}Do not add values in the deepest circles. Parent titles retain their values. If the graph is too crowded, this option might help.{p_end}
 
 {p2coldent : {opt nolab:els}}Do not add any labels. This gives just circles without any numbers. This option overrides the above two options.{p_end}
 
-{p2coldent : {opt labcond(value)}}The minimum value for showing the value labels. For example, {opt labcond(20)} will only plot values greater than 20.{p_end}
+{p2coldent : {opt labcond(value)}}The minimum aggregated value for showing labels, values, and titles. For example, {opt labcond(20)} shows labels for values of at least 20.
+This condition uses values, including when {opt share} is specified.{p_end}
 
-{p2coldent : {opt labs:ize(str list)}}The size of the labels. The default values are {opt labs(2 2 2)}. If only one value is specified, it will be passed on to all the layers.{p_end}
+{p2coldent : {opt labs:ize(str list)}}Label sizes ordered from parent to child. The default is 2 at every layer.
+Shorter lists repeat their final entry. Use numeric sizes with {opt labprop} or {opt titleprop}.{p_end}
+
+{p2coldent : {opt labcolor(str)}}Color of labels, values, and parent titles. Default is black.{p_end}
 
 {p2coldent : {opt labprop}}Make the size of the labels proportional to the area.{p_end}
 
 {p2coldent : {opt labscale(num)}}This option changes how the labels are scaled. This is an advanced option and should be used cautiously. Default value is {opt labscale(0.5)}.
 The scaling is sensitive to changes in this value, so modify it in small increments.{p_end}
 
-{p2coldent : {opt titleprop}}Make the size of the box titles proportional to the area.{p_end}
+{p2coldent : {opt titleprop}}Make the size of parent titles proportional to the area's share of the total.{p_end}
 
 {marker titles}{dlgtab:Other options}
 
@@ -86,31 +96,11 @@ The scaling is sensitive to changes in this value, so modify it in small increme
 
 {stata ssc install palettes, replace}
 {stata ssc install colrspace, replace}
-{stata ssc install graphfunctions, replace}
-
-Even if you have these installed, it is highly recommended to check for updates: {stata ado update, update}
-
+{stata ssc install moremata, replace}
 
 {title:Examples}
 
-{ul:{it:Set up the data}}
-
-{stata use "https://github.com/asjadnaqvi/stata-circlepack/blob/main/data/demo_r_pjangrp3_clean.dta?raw=true", clear}
-
-{stata drop year}
-{stata keep NUTS_ID y_TOT}
-{stata drop if y_TOT==0}
-{stata keep if length(NUTS_ID)==5}
-{stata gen NUTS2 = substr(NUTS_ID, 1, 4)}
-{stata gen NUTS1 = substr(NUTS_ID, 1, 3)}
-{stata gen NUTS0 = substr(NUTS_ID, 1, 2)}
-{stata ren NUTS_ID NUTS3}
-
-- {stata circlepack y_TOT, by(NUTS0)}
-
-- {stata circlepack y_TOT, by(NUTS0) addtitles labsize(2) format(%15.0fc)}
-
-- {stata circlepack y_TOT if NUTS0=="AT", by(NUTS3 NUTS2) addtitles noval labsize(1.6) format(%15.0fc)}
+See GitHub for details.
 
 
 {hline}
@@ -122,8 +112,8 @@ Please submit bugs, errors, or feature requests on {browse "https://github.com/a
 
 {title:Package details}
 
-Version      : {bf:circlepack} v1.21
-This release : 07 Jun 2026
+Version      : {bf:circlepack} v1.3
+This release : 02 Nov 2026
 First release: 08 Sep 2022
 Repository   : {browse "https://github.com/asjadnaqvi/circlepack":GitHub}
 Keywords     : Stata, graph, circle packing, circlepack, A1.0
@@ -161,4 +151,3 @@ Please note that the GitHub version might be newer than the SSC version.
   {helpb sunburst}, {helpb ternary}, {helpb tidytuesday}, {helpb treecluster}, {helpb treemap}, {helpb trimap}, {helpb waffle}, {helpb vcontrol}
 
 Visit {browse "https://github.com/asjadnaqvi":GitHub} for further details.
-

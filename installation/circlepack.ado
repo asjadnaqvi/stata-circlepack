@@ -1,6 +1,7 @@
-*! circlepack v1.21 (07 Jun 2026) 
+*! circlepack v1.3 (02 Nov 2026)
 *! Asjad Naqvi (asjadnaqvi@gmail.com)
 
+*v1.3  (02 Nov 2026): One arbitrary-depth hierarchy engine. Parent-specific grouping, double precision, and per-layer styles.
 *v1.21 (07 Jun 2026): minor bug fixes to better handle missing values and zeroes. Updated dependencies.
 *v1.2  (15 Jan 2024): minor cleanups, updated dependencies, bug fixes.  
 *v1.1  (16 May 2023): Major update. Several features added to make it more compatible with treemap.
@@ -8,618 +9,205 @@
 *v1.0  (08 Sep 2022): First release.
 
 
-cap prog drop circlepack
-
-prog def circlepack, sortpreserve
-
+capture program drop circlepack
+program define circlepack, sortpreserve rclass
 	version 15
-	
-	syntax varlist(numeric max=1) [if] [in], by(varlist min=1 max=3)	 ///   
-		[ pad(real 0.1) angle(real 0) points(real 60) circle0 circle0c(string) format(str) palette(string) ADDTitles NOVALues NOLABels cond(string)  ]		///
-		[ LABColor(string) * ] ///
-		[ share THRESHold(numlist max=1 >=0) labprop labscale(real 0.5) LABSize(string) titleprop  fi(numlist max=3) labcond(real 0) ]  // v1.1 options
-	
-	marksample touse, strok
-	
-	
-	// check for dependencies
+	syntax varlist(numeric max=1) [if] [in], by(varlist min=1) ///
+		[ pad(real 0.1) angle(real 0) points(real 60) circle0 circle0c(string) ///
+		  format(str) palette(string) NOTitles NOVALues NOLABels cond(string) ///
+		  LABColor(string) share THRESHold(numlist max=1 >=0) labprop ///
+		  labscale(real 0.5) LABSize(string) titleprop fi(numlist >=0 <=100) ///
+		  labcond(real 0) * ]
+
+	if missing(`pad') | `pad' < 0 {
+		display as error "pad() must be nonnegative."
+		exit 198
+	}
+	if missing(`points') | `points' < 3 | `points' != floor(`points') {
+		display as error "points() must be an integer of at least 3."
+		exit 198
+	}
+	if missing(`angle', `labscale', `labcond') {
+		display as error "angle(), labscale(), and labcond() must be nonmissing."
+		exit 198
+	}
 	capture findfile colorpalette.ado
 	if _rc != 0 {
 		display as error "The {bf:palettes} package is missing. Install the {stata ssc install palettes, replace:palettes} and {stata ssc install colrspace, replace:colrspace} packages."
 		exit 198
 	}
-	
-	
-	cap findfile carryforward.ado
-	if _rc != 0 {
-		qui ssc install carryforward, replace
-	}		
-	
-
-qui {	
-preserve	
-	keep if `touse'
-	
-	qui summ `varlist', meanonly
-	if r(min) <= 0 noi di in yellow "`varlist' contains zeros or negative values. These have been dropped."
-	drop if `varlist' <= 0	
-	
-	local length : word count `by'
-	
-	if `length' == 1 {
-		local var0 `by'
-		
-		cap confirm string var `var0'
-			if _rc!=0 {
-				gen var0_temp = string(`var0')
-				local var0 var0_temp
-			}
-		
-		collapse (sum) `varlist', by(`var0') 
-		
-		if "`threshold'"!="" {
-			replace `var0' = "Rest of `var0'" if `varlist' <= `threshold'
-		}
-		
-		collapse (sum) `varlist', by(`var0') 		
-		
-		
-		gen double var0_v = `varlist'
-		gsort -var0_v `var0'  // stabilize the sort
-	}
-
-	if `length' == 2 {
-		tokenize `by'
-		local var0 `1'
-		local var1 `2'
-		
-		cap confirm string var `var0'
-			if _rc!=0 {
-				gen var0_temp = string(`var0')
-				local var0 var0_temp
-			}
-			
-		cap confirm string var `var1'
-			if _rc!=0 {
-				gen var1_temp = string(`var1')
-				local var1 var1_temp
-			}	
-		
-		collapse (sum) `varlist', by(`var0' `var1') 
-		
-		if "`threshold'"!="" {
-			levelsof `var0', local(lvls)
-			foreach x of local lvls {
-				replace `var1' = "Rest of `x'" if `varlist' <= `threshold' & `var0'=="`x'"
-			}
-		}
-		
-		collapse (sum) `varlist', by(`var0' `var1') 
-
-		bysort `var0': egen var0_v = sum(`varlist')
-		gen double var1_v = `varlist'
-
-		gsort -var0_v -var1_v
-		
-	}	
-	
-
-	if `length' == 3 {
-		tokenize `by'
-		local var0 `1'
-		local var1 `2'
-		local var2 `3'
-		
-		cap confirm string var `var0'
-			if _rc!=0 {
-				gen var0_temp = string(`var0')
-				local var0 var0_temp
-			}
-			
-		cap confirm string var `var1'
-			if _rc!=0 {
-				gen var1_temp = string(`var1')
-				local var1 var1_temp
-			}	
-			
-		cap confirm string var `var2'
-			if _rc!=0 {
-				gen var2_temp = string(`var2')
-				local var2 var2_temp
-			}				
-		
-		
-		if "`threshold'"!="" {
-			levelsof `var1', local(lvls)
-			foreach x of local lvls {
-				replace `var2' = "Rest of `x'" if `varlist' <= `threshold' & `var1'=="`x'"
-			}
-		}
-		
-		collapse (sum) `varlist', by(`var0' `var1' `var2')
-		
-		bysort `var0': egen var0_v = sum(`varlist')
-		bysort `var1': egen var1_v = sum(`varlist')
-		gen double var2_v = `varlist'
-		
-		gsort -var0_v -var1_v -var2_v
-	}
-	
-
-	gen id = _n		
-
-	** the highest level is sorted highest to lowest
-
-	egen var0_t = tag(`var0')
-	gen  double var0_o = sum(`var0' != `var0'[_n-1]) 
-	
-	if `length' > 1 {
-			
-		egen var1_t = tag(`var0' `var1')
-
-		gsort `var0' -var1_t -var1_v 
-		cap drop var1_o
-		bysort `var0': gen var1_o = _n if var1_t==1
-		sort id
-		carryforward var1_o, replace
-	}
-
-	if `length' > 2 {	
-		sort `var1' id 
-		by `var1': gen var2_o = _n
-		gen var2_t = 1	
-	}
-
-	sort id
-	
-	// set up the base values
-	
-	local radius = 10 // this radius is hardcoded
-	mata: eps = 1e-9; enclosure0 = (0, 0, `radius'); angle = `angle'; pad = `pad'; obs = `points'
-	
-	if "`format'"  == "" {
-		if "`share'"  == "" {
-			local format %12.0fc
-		}
-		else {
-			local format %5.2f
-		}
-	}
-
-	**********************
-	** process level 0  **
-	**********************
-
-		mata data = select(st_data(., ("var0_v")), st_data(., "var0_t=1"))
-		mata datasum = sum(data[.,1])
-		mata c0 = circlify_level(data, enclosure0); p0 = getcoords2(c0, angle, obs)
-		mata st_matrix("p0", p0)	
-		mata st_matrix("p0_lab", (c0[.,1..2], data, data :/ datasum))
-
-		
-	**********************
-	** process level 1  **
-	**********************
-
-	if `length' > 1 {
-	
-	mata c0[.,3] = c0[.,3] :- pad 
-
-	levelsof var0_o, local(l0)
-	foreach i of local l0 { 
-
-			mata mydata = select(st_data(., ("var1_v", "var0_o")), st_data(., "var1_t = 1"))
-			mata mydata = select(mydata[.,1], mydata[.,2] :== `i')		
-			mata c1_`i' = circlify_level(mydata, c0[`i',.]); p1_`i' = getcoords2(c1_`i', angle, obs)			
-			mata st_matrix("p1_`i'", p1_`i')	
-			mata st_matrix("p1_`i'_lab", (c1_`i'[.,1..2], mydata, mydata :/ datasum))
-		}		
-	}
-	
-	
-	**********************
-	** process level 2  **
-	**********************
-
-	if `length' > 2 {	
-	
-		levelsof var0_o, local(l0)
-		foreach i of local l0 {
-
-			mata c1_`i'[.,3] = c1_`i'[.,3] :- pad
-
-			levelsof var1_o if var0_o==`i', local(l1)
-			foreach j of local l1 {
-			
-				mata mydata = select(st_data(., ("var2_v", "var0_o", "var1_o")), st_data(., "var2_t = 1"))
-				mata mydata = select(mydata[.,1], mydata[.,2] :== `i' :& mydata[.,3] :== `j')		
-				mata c2_`i'_`j' = circlify_level(mydata, c1_`i'[`j',.]); p2_`i'_`j' = getcoords2(c2_`i'_`j', angle, obs)
-				mata st_matrix("p2_`i'_`j'", p2_`i'_`j')				
-				mata st_matrix("p2_`i'_`j'_lab", (c2_`i'_`j'[.,1..2], mydata, mydata :/ datasum))
-			}
-		}	
-	}
-	
-	
-
-*************************************
-***  convert data to coordinates  ***
-*************************************
-
-	// finish up in Stata
-	
-	*** level 0
-	
-	cap drop _*
-	local varlist 
-
-	
-	mat colnames p0 = "_l0_x" "_l0_y" "_l0_id" "_l0_ymax"
-	svmat p0, n(col)
-	
-	// level 0 labels
-	mat colnames p0_lab = "_l0_xmid" "_l0_ymid" "_l0_val" "_l0_share"
-	svmat p0_lab, n(col)
-	
-	gen _l0_lab1 = ""
-	
-	levelsof var0_o, local(l0)
-	local item0 = `r(r)'
-	foreach i of local l0  {
-	
-		sum id if var0_o == `i' & var0_t == 1, meanonly
-		replace _l0_lab1 = `var0'[r(mean)] in `i'  if _l0_val >= `labcond'
-	}
-
-	local mylab cond("`share'"=="", _l0_val, _l0_share * 100)
-	
-	if "`share'"=="" {
-		gen  _l0_lab0 = "{it:" + _l0_lab1 + " (" + string(`mylab', "`format'") + ")}" in 1/`item0' if _l0_val >= `labcond'  
-		gen  _l0_lab2 = string(`mylab', "`format'") in 1/`item0'  if _l0_val >= `labcond' 
-	}
-	else {
-		gen  _l0_lab0 = "{it:" + _l0_lab1 + " (" + string(`mylab', "`format'") + "%)}" in 1/`item0'  if _l0_val >= `labcond'
-		gen  _l0_lab2 = string(`mylab', "`format'") + "%" in 1/`item0'  if _l0_val >= `labcond' 
-	}
-	
-	*** level 1
-	
-	if `length' > 1 {	
-	
-		levelsof var0_o, local(l0)
-		foreach i of local l0  {
-			
-		
-		mat colnames p1_`i' = "_l1_`i'_x" "_l1_`i'_y" "_l1_`i'_id" "_l1_`i'_ymax"
-		svmat p1_`i', n(col)
-		
-		
-		// level 1 labels
-		mat colnames p1_`i'_lab = "_l1_`i'_xmid" "_l1_`i'_ymid" "_l1_`i'_val" "_l1_`i'_share"
-		svmat p1_`i'_lab, n(col)
-		
-		gen _l1_`i'_lab1 = ""
-			
-			levelsof var1_o if var0_o==`i', local(l1)
-			local item1 = `r(r)'
-			foreach j of local l1  {
-				
-				sum id if var0_o == `i' & var1_o == `j' & var1_t == 1, meanonly
-				replace _l1_`i'_lab1 = `var1'[r(mean)] in `j'   if _l1_`i'_val >= `labcond'
-			}
-		
-		local mylab cond("`share'"=="", _l1_`i'_val, _l1_`i'_share * 100)			
-		
-			if "`share'"=="" {
-				gen  _l1_`i'_lab0 = "{it:" + _l1_`i'_lab1 + " (" + string(`mylab', "`format'") + ")}"  in 1/`item1' if _l1_`i'_val >= `labcond' 
-				gen  _l1_`i'_lab2 = string(`mylab', "`format'")  in 1/`item1'  if _l1_`i'_val >= `labcond' 
-			}
-			else {
-				gen  _l1_`i'_lab0 = "{it:" + _l1_`i'_lab1 + " (" + string(`mylab', "`format'") + "%)}"  in 1/`item1' if _l1_`i'_val >= `labcond'  
-				gen  _l1_`i'_lab2 = string(`mylab', "`format'") + "%"  in 1/`item1'  if _l1_`i'_val >= `labcond' 
-			}
-		}
-	}
-	
-	
-	*** level 2
-	
-	if `length' > 2 {	
-	
-		levelsof var0_o, local(l0)
-		foreach i of local l0  {
-			
-			levelsof var1_o if var0_o==`i', local(l1)
-			foreach j of local l1  {	
-				
-			
-			mat colnames p2_`i'_`j' =  "_l2_`i'_`j'_x" "_l2_`i'_`j'_y" "_l2_`i'_`j'_id" "_l2_`i'_`j'_ymax"
-			svmat p2_`i'_`j', n(col)
-			
-			mat colnames p2_`i'_`j'_lab = "_l2_`i'_`j'_xmid" "_l2_`i'_`j'_ymid" "_l2_`i'_`j'_val" "_l2_`i'_`j'_share"
-			svmat p2_`i'_`j'_lab, n(col)
-			
-			gen _l2_`i'_`j'_lab1 = ""
-			
-			levelsof var2_o if var0_o==`i' & var1_o==`j' & var2_t==1, local(l2)
-			local item2 = `r(r)'		
-					foreach k of local l2  {	
-						
-						sum id if var0_o == `i' & var1_o==`j'& var2_o==`k' &  var2_t == 1, meanonly
-						replace _l2_`i'_`j'_lab1 = `var2'[r(mean)] in `k'  if _l2_`i'_`j'_val >= `labcond'
-					}
-			
-			
-				local mylab cond("`share'"=="", _l2_`i'_`j'_val, _l2_`i'_`j'_share * 100)	
-				
-				if "`share'"=="" {
-					gen  _l2_`i'_`j'_lab0 = "{it:" + _l2_`i'_`j'_lab1 + " (" + string(`mylab', "`format'") + ")}"  in 1/`item2' if _l2_`i'_`j'_val >= `labcond'
-					gen  _l2_`i'_`j'_lab2 = string(`mylab', "`format'") in 1/`item2'  if _l2_`i'_`j'_val >= `labcond'
-				}
-				else {
-					gen  _l2_`i'_`j'_lab0 = "{it:" + _l2_`i'_`j'_lab1 + " (" + string(`mylab', "`format'") + "%)}"  in 1/`item2' if _l2_`i'_`j'_val >= `labcond'
-					gen  _l2_`i'_`j'_lab2 = string(`mylab', "`format'") + "%" in 1/`item2'  if _l2_`i'_`j'_val >= `labcond'
-				}			
-			
-			
-			
-			}	
-		}
-	}
-	
-	
-***************	
-***  draw	***
-***************
-
-	if "`palette'" == "" {
-		local palette tableau
-	}
-	else {
-		tokenize "`palette'", p(",")
-		local palette `1'
-		local poptions `3'
-	}
-
-	*** draw the layers ***
-	
-	// control the fill intensities
-	
-	if "`fi'" != "" {
-		tokenize `fi'
-		local filen : word count `fi'
-		
-		local fi2 `1'
-		local fi1 `1'
-		local fi0 `1'
-
-		if `filen' > 1 {
-			local fi1 `2'
-			local fi2 `2'
-		}
-			
-		if `filen' > 2 {
-			local fi1 `2'
-			local fi2 `3'
-		}
-	}
-	else {
-		local fi0 100
-		
-		if `length' == 2 {
-			local fi0 = 60
-			local fi1 = 90
-		}	
-		
-		if `length' == 3 {
-			local fi0 = 50
-			local fi1 = 75
-			local fi2 = 100
-		}	
-	}	
-
-	if "`labsize'" != "" {
-		tokenize `labsize'
-		local lslen : word count `labsize'
-		
-		local ls0 `1'
-		local ls1 `1'
-		local ls2 `1'
-
-		if `lslen' > 1 {
-			local ls1 `2'
-			local ls2 `2'
-		}
-			
-		if `lslen' > 2 {
-			local ls1 `2'
-			local ls2 `3'
-		}
-	}
-	else {
-		local ls0 2
-		local ls1 2
-		local ls2 2
-	}		
-	
-	
+	local depth : word count `by'
+	local firstby : word 1 of `by'
+	local radius 10
+	if "`threshold'" == "" local threshold 0
+	if "`labsize'" == "" local labsize 2
 	if "`labcolor'" == "" local labcolor black
-
-	
-	***************
-	*** level 0 ***
-	***************
-	
-	
-	levelsof var0_o, local(l0)
-	local lvl0 = `r(r)'
-	
-	foreach i of local l0  {	
-	
-			if "`titleprop'" != "" {
-				local labt0 = max((2 * `ls0' * _l0_share[`i']^`labscale'),0)
-			}
-			else {
-				local labt0 = `ls0'
-			}	
-			
-			if "`labprop'" != "" {
-				local labs0 = (2 * `ls0' * _l0_share[`i']^`labscale')
-			}
-			else {
-				local labs0 = `ls0'
-			}	
-		
-		colorpalette `palette', nograph n(`lvl0') `poptions'
-		
-		local c0 `c0' (area _l0_y _l0_x if _l0_id==`i', nodropbase fi(`fi0') fc("`r(p`i')'") lc(black) lw(0.03)) ||
-
-		local c0_box `c0_box' (scatter _l0_ymax _l0_xmid in `i', mc(none) mlab(_l0_lab0) mlabpos(12) mlabgap(0.8) mlabsize(`labt0') mlabc(`labcolor')) 
-		
-		local c0_lab `c0_lab' (scatter _l0_ymid _l0_xmid in `i', mc(none) mlab(_l0_lab1) mlabpos(0)               mlabsize(`labs0') mlabc(`labcolor') ) || 
-	
-		if "`novalues'" == "" local c0_lab `c0_lab'  (scatter _l0_ymid _l0_xmid in `i', mc(none) mlab(_l0_lab2) mlabgap(0) mlabpos(6) mlabsize(`labs0') mlabc(`labcolor') )
-			
-		
-	}
-	
-
-
-
-	***************
-	*** level 1 ***
-	***************
-	
-	if `length' > 1 {	
-	
-		levelsof var0_o, local(l0)
-		foreach i of local l0  {
-			
-			levelsof var1_o if var0_o==`i', local(l1)
-			foreach j of local l1  {
-			
-				if "`titleprop'" != "" {
-					local labt1 = max((2 * `ls1' * _l1_`i'_share[`j']^`labscale'),0)
-				}
-				else {
-					local labt1 = `ls1'
-				}				
-							
-				if "`labprop'" != "" {
-					local labs1 = max((2 * `ls1' * _l1_`i'_share[`j']^`labscale'),0)
-				}
-				else {
-					local labs1 = `ls1'
-				}			
-				
-				colorpalette `palette', nograph n(`lvl0') `poptions'
-				
-				local c1 `c1' (area _l1_`i'_y _l1_`i'_x  if _l1_`i'_id==`j', nodropbase fi(`fi1') fc("`r(p`i')'") lc(black) lw(0.03)) ||
-
-				local c1_box `c1_box' (scatter _l1_`i'_ymax _l1_`i'_xmid  in `j', mc(none) mlab(_l1_`i'_lab0) mlabpos(12) mlabgap(0) mlabsize(`labt1') mlabc(`labcolor') ) 
-					
-				local c1_lab `c1_lab' (scatter _l1_`i'_ymid _l1_`i'_xmid  in `j', mc(none) mlab(_l1_`i'_lab1) mlabpos(0) mlabsize(`labs1') mlabc(`labcolor') ) || 
-		
-				if "`novalues'" == "" local c1_lab `c1_lab' (scatter _l1_`i'_ymid _l1_`i'_xmid  in `j', mc(none) mlab(_l1_`i'_lab2) mlabpos(6) mlabgap(0) mlabsize(`labs1') mlabc(`labcolor') ) ||
-					
-
-			}
-		}
-	}
-	
-	***************
-	*** level 2 ***
-	***************
-
-	
-	if `length' > 2 {	
-	
-	levelsof var0_o, local(l0)
-		foreach i of local l0  {
-			
-			levelsof var1_o if var0_o==`i', local(l1)
-			foreach j of local l1  {	
-							
-				levelsof var2_o if var0_o==`i' & var1_o==`j', local(l2)
-				foreach k of local l2  {	
-				
-					
-				
-					if "`labprop'" != "" {
-						local labs2 = max((2 * `ls2' * _l2_`i'_`j'_share[`k']^`labscale'),0)
-					}
-					else {
-						local labs2 = `ls2'
-					}				
-					
-
-
-					colorpalette `palette', nograph n(`lvl0') `poptions'
-					
-					local c2 `c2' (area _l2_`i'_`j'_y _l2_`i'_`j'_x if _l2_`i'_`j'_id==`k', nodropbase fi(`fi2') fc("`r(p`i')'") lc(black) lw(0.03)) ||
-		
-					local c2_lab `c2_lab' (scatter _l2_`i'_`j'_ymid _l2_`i'_`j'_xmid in `k', mc(none) mlab(_l2_`i'_`j'_lab1) mlabpos(0) mlabsize(`labs2') mlabc(`labcolor') ) || 
-			
-					if "`novalues'" == "" local c2_lab `c2_lab' (scatter _l2_`i'_`j'_ymid _l2_`i'_`j'_xmid in `k', mc(none) mlab(_l2_`i'_`j'_lab2) mlabpos(6) mlabgap(0) mlabsize(`labs2') mlabc(`labcolor') ) ||
-				
-				}
-			}
-		}
-	}
-	
-	
 	if "`circle0c'" == "" local circle0c gs15
-	
-	if "`circle0'" != "" {
-		
-		local r0 = `radius' + `pad'
-		
-		local circle0  (function  sqrt(`r0'^2 - (x)^2), recast(area) fi(100) fc(`circle0c')  lw(none)  range(-`r0' `r0'))  || (function  -sqrt(`r0'^2 - (x)^2), recast(area) fi(100) fc(`circle0c') lw(none) range(-`r0' `r0')) 
-		
+	if "`format'" == "" {
+		local format %12.0fc
+		if "`share'" != "" local format %5.2f
 	}
-	
-	
-	
-	****************
-	***   plot   ***
-	****************
- 
- 
-	if `length' == 3 {
-		local mylab  `c2_lab'	
-		if "`addtitles'" != "" local boxlab `c1_box' || `c0_box'
-	} 
-	else if `length' == 2 {
-		local mylab  `c1_lab'
-		if "`addtitles'" != "" local boxlab `c0_box'
+	local ficount : word count `fi'
+	local sizecount : word count `labsize'
+	forvalues d = 1/`depth' {
+		local ix = min(`d', `sizecount')
+		local size`d' : word `ix' of `labsize'
+		local fi`d' 100
+		if `depth' == 2 local fi`d' = cond(`d' == 1, 60, 90)
+		if `depth' >= 3 local fi`d' = 50 + 50 * (`d' - 1) / (`depth' - 1)
+		if `ficount' > 0 {
+			local ix = min(`d', `ficount')
+			local fi`d' : word `ix' of `fi'
+		}
 	}
-	else {
-		local mylab  `c0_lab'
-		local boxlab
-	}
- 
- 
-	if "`nolabels'" != "" local mylab
- 
- 
-	twoway ///
-		`circle0' ///
-		`c0' ///
-		`c1' ///
-		`c2' ///
-		`mylab' ///
-		`boxlab' ///		
-			, ///
-			legend(off) ///
-			xscale(off) yscale(off) ///
-			aspect(1) xsize(1) ysize(1) ///
-			xlabel(-`radius' `radius', nogrid) ylabel(-`radius' `radius', nogrid) ///
-				`options'
-			
-	
 
-restore		
-}		
+	marksample touse, strok
+	preserve
+	quietly {
+		keep if `touse'
+		summarize `varlist', meanonly
+		if r(min) <= 0 noisily display as text "`varlist' contains zeros or negative values. These have been dropped."
+		drop if `varlist' <= 0 | missing(`varlist')
+		tempvar inputvalue
+		generate double `inputvalue' = `varlist'
+		local groups
+		foreach v of local by {
+			tempvar group
+			capture confirm string variable `v'
+			if !_rc generate `group' = `v'
+			else {
+				generate `group' = strtrim(string(`v', "%24.17g"))
+				drop if missing(`v')
+			}
+			drop if `group' == ""
+			local groups `groups' `group'
+		}
+		count
+		if r(N) == 0 {
+			noisily display as error "no positive, nonmissing observations with complete by() values"
+			exit 2000
+		}
+		keep `inputvalue' `groups'
+		rename `inputvalue' __cp_input
+		local by
+		forvalues d = 1/`depth' {
+			local v : word `d' of `groups'
+			rename `v' __cp_group`d'
+			local by `by' __cp_group`d'
+		}
+		collapse (sum) __cp_input, by(`by')
+		if `threshold' > 0 {
+			if `depth' == 1 {
+				replace __cp_group1 = "Rest of `firstby'" if __cp_input <= `threshold'
+			}
+			else {
+				local prev = `depth' - 1
+				replace __cp_group`depth' = "Rest of " + __cp_group`prev' if __cp_input <= `threshold'
+			}
+			collapse (sum) __cp_input, by(`by')
+		}
+		local prefix
+		forvalues d = 1/`depth' {
+			local prefix `prefix' __cp_group`d'
+			egen long __cp_id`d' = group(`prefix')
+			if `d' == 1 generate long __cp_parent`d' = 0
+			else {
+				local prev = `d' - 1
+				generate long __cp_parent`d' = __cp_id`prev'
+			}
+			bysort `prefix': egen double __cp_value`d' = total(__cp_input)
+			egen byte __cp_tag`d' = tag(`prefix')
+			gsort __cp_parent`d' -__cp_value`d' __cp_group`d'
+			by __cp_parent`d': generate long __cp_order`d' = sum(__cp_tag`d')
+		}
+
+		tempfile cp_nodes
+		tempname cp_post
+		postfile `cp_post' long __depth __id __parent double __value ///
+			long __order str2045 __cp_name using `cp_nodes', replace
+		forvalues d = 1/`depth' {
+			forvalues obs = 1/`=_N' {
+				if __cp_tag`d'[`obs'] {
+					post `cp_post' (`d') (__cp_id`d'[`obs']) (__cp_parent`d'[`obs']) ///
+						(__cp_value`d'[`obs']) (__cp_order`d'[`obs']) (__cp_group`d'[`obs'])
+				}
+			}
+		}
+		postclose `cp_post'
+		use `cp_nodes', clear
+		foreach v in x y depth node parent value share cx cy r ty root order {
+			generate double __cp_`v' = .
+		}
+		local nnode = _N
+		mata: circlepack_layout_any(`radius', `pad', `angle', `points')
+		drop in 1/`nnode'
+		drop __depth __id __parent __value __order
+
+		generate str2045 __cp_lab = __cp_name if __cp_value >= `labcond'
+		local labelvalue __cp_value
+		local suffix
+		if "`share'" != "" {
+			local labelvalue (__cp_share * 100)
+			local suffix %
+		}
+		generate str80 __cp_num = string(`labelvalue', "`format'") + "`suffix'" if __cp_value >= `labcond'
+		generate str2045 __cp_title = "{it:" + __cp_lab + " (" + __cp_num + ")}" if __cp_value >= `labcond'
+		generate long __cp_row = _n
+
+		if "`palette'" == "" local palette tableau
+		local poptions
+		if strpos("`palette'", ",") {
+			tokenize "`palette'", p(",")
+			local palette `1'
+			local poptions `3'
+		}
+		levelsof __cp_order if __cp_depth == 1, local(roots)
+		local nroot : word count `roots'
+		colorpalette `palette', n(`nroot') `poptions' nograph
+		forvalues i = 1/`nroot' {
+			local color`i' `"`r(p`i')'"'
+		}
+		local plots
+		local labels
+		local titles
+		forvalues d = 1/`depth' {
+			levelsof __cp_node if __cp_depth == `d', local(ids)
+			foreach node of local ids {
+				summarize __cp_row if __cp_depth == `d' & __cp_node == `node', meanonly
+				local row = r(min)
+				local root = __cp_root[`row']
+				local clr `"`color`root''"'
+				local plots `"`plots' (area __cp_y __cp_x if __cp_depth == `d' & __cp_node == `node', nodropbase fi(`fi`d'') fc("`clr'") lc(black) lw(0.03))"'
+				if "`nolabels'" == "" {
+					local size `size`d''
+					if (`d' == `depth' & "`labprop'" != "") | (`d' < `depth' & "`titleprop'" != "") {
+						local size = max(2 * `size`d'' * __cp_share[`row']^`labscale', 0)
+					}
+					if `d' == `depth' {
+						local labels `"`labels' (scatter __cp_cy __cp_cx in `row', mc(none) mlab(__cp_lab) mlabpos(0) mlabsize(`size') mlabc(`labcolor'))"'
+						if "`novalues'" == "" {
+							local labels `"`labels' (scatter __cp_cy __cp_cx in `row', mc(none) mlab(__cp_num) mlabpos(6) mlabgap(0) mlabsize(`size') mlabc(`labcolor'))"'
+						}
+					}
+					else if "`notitles'" == "" {
+						local gap = cond(`d' == 1, 0.8, 0)
+						local titles `"`titles' (scatter __cp_ty __cp_cx in `row', mc(none) mlab(__cp_title) mlabpos(12) mlabgap(`gap') mlabsize(`size') mlabc(`labcolor'))"'
+					}
+				}
+			}
+		}
+		local bounding
+		if "`circle0'" != "" {
+			local r0 = `radius' + `pad'
+			local bounding (function sqrt(`r0'^2 - x^2), recast(area) fi(100) fc(`circle0c') lw(none) range(-`r0' `r0')) ///
+				(function -sqrt(`r0'^2 - x^2), recast(area) fi(100) fc(`circle0c') lw(none) range(-`r0' `r0'))
+		}
+		noisily twoway `bounding' `plots' `labels' `titles', ///
+			legend(off) xscale(off) yscale(off) aspect(1) xsize(1) ysize(1) ///
+			xlabel(-`radius' `radius', nogrid) ylabel(-`radius' `radius', nogrid) `options'
+		restore
+	}
+	return scalar depth = `depth'
 
 end
 
@@ -627,6 +215,85 @@ end
 ***************************
 *** Mata sub-routines   ***
 ***************************
+
+capture mata mata drop circlepack_layout_any()
+mata:
+void circlepack_layout_any(real scalar radius, real scalar pad,
+	real scalar angle, real scalar points)
+{
+	real matrix nodes, panel, bounds, packed, target, out, coords
+	real colvector indices, roots, seq
+	real scalar n, first, last, d, row, j, parentrow, total, off, count
+	string colvector names, outnames
+
+	nodes = st_data(., ("__depth", "__id", "__parent", "__value", "__order"))
+	names = st_sdata(., "__cp_name")
+	indices = order(nodes, (1, 3, 5))
+	nodes = nodes[indices, .]
+	names = names[indices]
+	n = rows(nodes)
+	bounds = J(n, 3, .)
+	roots = J(n, 1, .)
+	// IDs represent complete paths and are contiguous within each depth.
+	panel = J(max(nodes[,1]), max(nodes[,2]), .)
+	for (row = 1; row <= n; row++) panel[nodes[row,1], nodes[row,2]] = row
+	total = sum(select(nodes[,4], nodes[,1] :== 1))
+	if (total >= . | total <= 0) {
+		errprintf("circlepack totals must be positive and finite\n")
+		_error(198)
+	}
+	count = points + 1
+	out = J(count*n, 13, .)
+	outnames = J(count*n, 1, "")
+	first = 1
+	while (first <= n) {
+		d = nodes[first,1]
+		last = first
+		while (last < n) {
+			if (nodes[last+1,1] != d | nodes[last+1,3] != nodes[first,3]) break
+			last++
+		}
+		if (d == 1) target = (0, 0, radius)
+		else {
+			parentrow = panel[d-1, nodes[first,3]]
+			target = bounds[parentrow,.]
+			target[3] = target[3] - min((pad, target[3]/2))
+			if (target[3] >= . | target[3] <= 0) {
+				errprintf("nonpositive or missing parent radius at hierarchy level %g\n", d)
+				_error(198)
+			}
+		}
+		packed = circlify_level(nodes[|first,4 \ last,4|], target)
+		if (any(packed :>= .) | any(packed[,3] :<= 0)) {
+			errprintf("invalid circle geometry at hierarchy level %g\n", d)
+			_error(198)
+		}
+		bounds[|first,1 \ last,3|] = packed
+		for (row = first; row <= last; row++) {
+			j = row - first + 1
+			if (d == 1) roots[row] = nodes[row,5]
+			else roots[row] = roots[parentrow]
+			off = count*(row-1)
+			coords = returnbounds(packed[j,.], angle, points)
+			out[|off+1,1 \ off+count,2|] = coords \ coords[1,.]
+			out[|off+1,3 \ off+count,7|] = J(count,1,1) *
+				(d, nodes[row,2], nodes[row,3], nodes[row,4], nodes[row,4]/total)
+			out[off+1,8..9] = packed[j,1..2]
+			out[|off+1,10 \ off+count,10|] = J(count,1,packed[j,3])
+			out[off+1,11] = max(coords[,2])
+			out[|off+1,12 \ off+count,13|] = J(count,1,1) * (roots[row], nodes[row,5])
+			outnames[|off+1 \ off+count|] = J(count,1,names[row])
+		}
+		first = last + 1
+	}
+	st_addobs(count*n)
+	seq = (n+1)::((count+1)*n)
+	st_store(seq, ("__cp_x", "__cp_y", "__cp_depth", "__cp_node", "__cp_parent",
+		"__cp_value", "__cp_share", "__cp_cx", "__cp_cy", "__cp_r", "__cp_ty",
+		"__cp_root", "__cp_order"), out)
+	st_sstore(seq, "__cp_name", outnames)
+}
+end
 
 
 
